@@ -11,10 +11,15 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
 from pathlib import Path
-import dj_database_url  # Add this import
+import dj_database_url  
+import os
+import sys
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Add the project root directory to the Python path
+sys.path.append(str(BASE_DIR))
 
 
 # Quick-start development settings - unsuitable for production
