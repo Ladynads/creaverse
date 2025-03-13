@@ -48,6 +48,9 @@ INSTALLED_APPS = [
     'users',
 ]
 
+# Custom user model
+AUTH_USER_MODEL = 'users.CustomUser'
+
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',  # Add this for serving static files in production
@@ -123,7 +126,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
 STATIC_URL = 'static/'
-STATIC_ROOT = BASE_DIR / 'staticfiles'  # Add this line
+STATIC_ROOT = BASE_DIR / 'staticfiles' 
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'  # Add this for Heroku
 
 
