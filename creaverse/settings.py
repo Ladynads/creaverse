@@ -32,7 +32,8 @@ SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'change-this-for-local-dev-only')
 DEBUG = os.getenv('DJANGO_DEBUG', 'False') == 'True'
 
 
-ALLOWED_HOSTS = os.getenv('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
+ALLOWED_HOSTS = os.getenv('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1,creaverse-813bebe0de8e.herokuapp.com').split(',')
+
 
 
 
