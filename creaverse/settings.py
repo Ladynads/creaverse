@@ -37,7 +37,7 @@ if not DEBUG:  # Only apply these settings when DEBUG is False (i.e., in product
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
 
-    SECURE_SSL_REDIRECT = True  # Redirect all HTTP requests to HTTPS
+    SECURE_SSL_REDIRECT = False  # Redirect all HTTP requests to HTTPS
 
 
 ALLOWED_HOSTS = os.getenv('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1,creaverse-813bebe0de8e.herokuapp.com').split(',')
