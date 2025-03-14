@@ -29,7 +29,7 @@ sys.path.append(str(BASE_DIR))
 SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'change-this-for-local-dev-only')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.getenv('DJANGO_DEBUG', 'False') == 'True'
+DEBUG = True
 
 # Ensure the app is only served over HTTPS in production
 if not DEBUG:  # Only apply these settings when DEBUG is False (i.e., in production)
@@ -78,7 +78,7 @@ ROOT_URLCONF = 'creaverse.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -153,3 +153,8 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # Security settings
 SESSION_COOKIE_SECURE = True  # Ensures session cookies are only sent over HTTPS
 CSRF_COOKIE_SECURE = True  # Ensures CSRF cookie is only sent over HTTPS
+
+# Authentication Redirects
+LOGIN_REDIRECT_URL = 'home'  # Redirect after successful login
+LOGOUT_REDIRECT_URL = 'home'  # Redirect after logout
+LOGIN_URL = 'login'  # Redirect if login is required

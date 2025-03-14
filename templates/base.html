@@ -1,0 +1,15 @@
+<nav>
+    {% if user.is_authenticated %}
+        <!-- Logout Button (POST Request - for Security) -->
+        <form id="logout-form" action="{% url 'logout' %}" method="post" style="display: inline;">
+            {% csrf_token %}
+            <button type="submit">Logout</button>
+        </form>
+
+        <!-- Logout Link (GET Request - For Convenience) -->
+        <a href="{% url 'logout' %}">Logout (GET)</a>
+
+    {% else %}
+        <a href="{% url 'login' %}">Login</a>
+    {% endif %}
+</nav>
