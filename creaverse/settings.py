@@ -31,6 +31,14 @@ SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'change-this-for-local-dev-only')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DJANGO_DEBUG', 'False') == 'True'
 
+# Ensure the app is only served over HTTPS in production
+if not DEBUG:  # Only apply these settings when DEBUG is False (i.e., in production)
+    SECURE_HSTS_SECONDS = 31536000  # 1 year
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+
+    SECURE_SSL_REDIRECT = True  # Redirect all HTTP requests to HTTPS
+
 
 ALLOWED_HOSTS = os.getenv('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1,creaverse-813bebe0de8e.herokuapp.com').split(',')
 
