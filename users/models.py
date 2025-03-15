@@ -15,12 +15,12 @@ class CustomUser(AbstractUser):
     def __str__(self):
         return self.username
 
-    # ✅ Function to get profile image or default
+    # ✅ Get profile image or default
     def get_profile_image(self):
-        if self.profile_image:
-            return self.profile_image.url
-        return static("profile_pics/default_profile.png")  # ✅ Default profile picture
-
+        """Returns the user's profile image or the default avatar if none is set."""
+        if self.profile_image and hasattr(self.profile_image, "url"):
+            return self.profile_image.url  # Use uploaded image
+        return static("profile_pics/default_profile.webp")  # Serve default avatar
 
 # ✅ Post Model (Interactive Feed)
 class Post(models.Model):
