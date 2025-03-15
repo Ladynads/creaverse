@@ -78,7 +78,10 @@ ROOT_URLCONF = 'creaverse.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'templates'],
+        'DIRS': [
+            BASE_DIR / 'templates',  # Global templates
+            BASE_DIR / 'users' / 'templates',  # User-related templates
+        ], 
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [

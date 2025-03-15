@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>🌟 CreatorVerse Feed</h2>
+
+<!-- ✅ Create Post Form (Inline) -->
+{% if user.is_authenticated %}
+    <form method="POST" action="{% url 'new_post' %}">
+        {% csrf_token %}
+        <textarea name="content" placeholder="Write something amazing..." required></textarea>
+        <button type="submit">➕ Create Post</button>
+    </form>
+{% endif %}
+
+<hr>
+
+<!-- ✅ Display Posts -->
+<ul>
+    {% for post in posts %}
+        <li>
+            <strong>{{ post.user.username }}</strong> - {{ post.created_at|date:"F j, Y, g:i a" }}
+            <p>{{ post.content }}</p>
+
+            <!-- ✅ Like Button (AJAX) -->
+            <button class="like-btn" data-post-id="{{ post.id }}">
+                {% if user in post.likes.all %}
+                    ❤️ Unlike
+                {% else %}
+                    🤍 Like
+                {% endif %}
+            </button>
+            <span id="like-count-{{ post.id }}">{{ post.likes.count }}</span> Likes
+
+            <!-- ✅ Show Comments -->
+            <h4>💬 Comments:</h4>
+            <ul>
+                {% for comment in post.comments.all %}
+                    <li>
+                        <strong>{{ comment.user.username }}:</strong> {{ comment.content }}
+                        {% if comment.user == user or post.user == user %}
+                            <form action="{% url 'delete_comment' comment.id %}" method="POST" style="display:inline;">
+                                {% csrf_token %}
+                                <button type="submit" style="color:red;">❌ Delete</button>
+                            </form>
+                        {% endif %}
+                    </li>
+                {% empty %}
+                    <li>No comments yet. Be the first to comment!</li>
+                {% endfor %}
+            </ul>
+
+            <!-- ✅ Add Comment Form -->
+            {% if user.is_authenticated %}
+                <form action="{% url 'add_comment' post.id %}" method="POST">
+                    {% csrf_token %}
+                    <input type="text" name="content" placeholder="Write a comment..." required>
+                    <button type="submit">💬 Comment</button>
+                </form>
+            {% endif %}
+
+            <!-- ✅ Delete Post Button (Only for Post Owner) -->
+            {% if post.user == user %}
+                <form action="{% url 'delete_post' post.id %}" method="POST" style="display:inline;">
+                    {% csrf_token %}
+                    <button type="submit" style="color:red;">🗑️ Delete Post</button>
+                </form>
+            {% endif %}
+            
+            <hr>
+        </li>
+    {% empty %}
+        <p>No posts yet. Be the first to post!</p>
+    {% endfor %}
+</ul>
+
+<!-- ✅ JavaScript for AJAX Like System -->
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    document.querySelectorAll(".like-btn").forEach(button => {
+        button.addEventListener("click", function() {
+            let postId = this.dataset.postId;
+            let url = `{% url 'like_post' 999999 %}`.replace('999999', postId); // ✅ Dynamic URL
+
+            fetch(url, {
+                method: "POST",
+                headers: {
+                    "X-CSRFToken": getCookie("csrftoken"),
+                    "Content-Type": "application/json"
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.liked) {
+                    this.innerHTML = "❤️ Unlike";
+                } else {
+                    this.innerHTML = "🤍 Like";
+                }
+                document.querySelector(`#like-count-${postId}`).textContent = data.total_likes;
+            })
+            .catch(error => console.error("Error:", error));
+        });
+    });
+
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== "") {
+            let cookies = document.cookie.split(";");
+            for (let i = 0; i < cookies.length; i++) {
+                let cookie = cookies[i].trim();
+                if (cookie.startsWith(name + "=")) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+});
+</script>
+
+{% endblock %}
+
+
