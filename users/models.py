@@ -1,14 +1,25 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
+from django.templatetags.static import static
 
 # ✅ Custom User Model
 class CustomUser(AbstractUser):
     bio = models.TextField(blank=True, null=True)  # Optional user bio
-    profile_image = models.ImageField(upload_to="profile_pics/", blank=True, null=True)  # Profile picture
+    profile_image = models.ImageField(
+        upload_to="profile_pics/",
+        blank=True,
+        null=True
+    )  
     invite_code = models.CharField(max_length=10, blank=True, null=True)  # Invite code for access control
 
     def __str__(self):
         return self.username
+
+    # ✅ Function to get profile image or default
+    def get_profile_image(self):
+        if self.profile_image:
+            return self.profile_image.url
+        return static("profile_pics/default_profile.png")  # ✅ Default profile picture
 
 
 # ✅ Post Model (Interactive Feed)

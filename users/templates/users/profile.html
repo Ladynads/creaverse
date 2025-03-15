@@ -1,9 +1,11 @@
 {% extends "base.html" %}
 {% block content %}
 <h2>👤 {{ user.username }}'s Profile</h2>
-<img src="{{ user.profile_image.url }}" alt="Profile Image" width="100">
 
-<p><strong>Bio:</strong> {{ user.bio }}</p>
+<!-- ✅ Use Django method to serve default profile image -->
+<img src="{{ user.get_profile_image }}" alt="Profile Image" width="100">
+
+<p><strong>Bio:</strong> {{ user.bio|default:"No bio yet." }}</p>
 <p><strong>Email:</strong> {{ user.email }}</p>
 
 <a href="{% url 'profile_edit' %}">✏ Edit Profile</a>
@@ -17,4 +19,5 @@
     {% endfor %}
 </ul>
 {% endblock %}
+
 
