@@ -6,7 +6,11 @@
     {% for message in messages %}
         <li>
             <a href="{% url 'message_thread' message.sender.id %}">
-                <strong>{{ message.sender.username }}</strong>: 
+                <strong>
+                    <a href="{% url 'user_profile' message.sender.username %}">
+                        {{ message.sender.username }}
+                    </a>
+                </strong>: 
                 {{ message.content|truncatewords:10 }}
                 {% if not message.is_read %}
                     <span style="color: red;">(New)</span>
@@ -18,5 +22,6 @@
     {% endfor %}
 </ul>
 {% endblock %}
+
 
 

@@ -6,11 +6,13 @@ from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
-from django.views.generic import UpdateView, CreateView
+from django.views.generic import UpdateView
 from django.contrib.auth import get_user_model
 from django.db.models import Max
 from .forms import CustomUserCreationForm
 from .models import Post, Comment, Message
+
+User = get_user_model()
 
 # ✅ User Registration View
 def register(request):
@@ -39,25 +41,37 @@ class CustomLogoutView(LogoutView):
         return redirect(self.next_page)
 
 
-# ✅ User Profile View
+# ✅ View Own Profile
 @login_required
 def profile_view(request):
     return render(request, 'users/profile.html', {'user': request.user})
 
 
-# ✅ Profile Update View
-@method_decorator(login_required, name='dispatch')
-class ProfileUpdateView(UpdateView):
-    model = get_user_model()
-    fields = ['username', 'email', 'bio', 'profile_image']
-    template_name = 'users/profile_edit.html'
-    success_url = reverse_lazy('profile')
+# ✅ Edit Profile
+@login_required
+def profile_edit(request):
+    if request.method == "POST":
+        user = request.user
+        user.username = request.POST.get('username', user.username)
+        user.email = request.POST.get('email', user.email)
+        user.bio = request.POST.get('bio', user.bio)
+        if 'profile_image' in request.FILES:
+            user.profile_image = request.FILES['profile_image']
+        user.save()
+        return redirect('profile')
 
-    def get_object(self):
-        return self.request.user
+    return render(request, 'users/profile_edit.html')
 
 
-# ✅ Feed View
+# ✅ View Other User Profiles
+@login_required
+def user_profile(request, username):
+    profile_user = get_object_or_404(User, username=username)
+    posts = Post.objects.filter(user=profile_user).order_by('-created_at')
+    return render(request, 'users/user_profile.html', {'profile_user': profile_user, 'posts': posts})
+
+
+# ✅ Feed View (Latest Posts)
 @login_required
 def feed_view(request):
     posts = Post.objects.all().order_by('-created_at')
@@ -74,8 +88,8 @@ def create_post(request):
     return redirect("feed")
 
 
-# ✅ Like/Unlike a Post (AJAX Request)
-@csrf_exempt  # Disable CSRF for AJAX (alternative is to send CSRF token)
+# ✅ Like/Unlike a Post (AJAX)
+@csrf_exempt  
 @login_required
 def like_post(request, post_id):
     post = get_object_or_404(Post, id=post_id)
@@ -125,8 +139,7 @@ def delete_comment(request, comment_id):
     return redirect('feed')
 
 
-# ✅ Private Messaging (DMs)
-# ✅ View All Conversations (Inbox - Latest Message Per User)
+# ✅ View All Conversations (Latest Message Per User)
 @login_required
 def message_list(request):
     # ✅ Get latest message per conversation (grouped by user)
@@ -175,6 +188,3 @@ def message_thread(request, receiver_id):
     unread_messages.update(is_read=True)
 
     return render(request, 'messages/message_thread.html', {'messages': messages, 'receiver': receiver})
-
-
-

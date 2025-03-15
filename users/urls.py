@@ -1,8 +1,8 @@
 from django.urls import path
 from .views import (
-    register, CustomLoginView, CustomLogoutView, profile_view, ProfileUpdateView, 
+    register, CustomLoginView, CustomLogoutView, profile_view, profile_edit, 
     feed_view, create_post, like_post, add_comment, delete_post, delete_comment,
-    message_list, send_message, message_thread
+    message_list, send_message, message_thread, user_profile
 )
 
 urlpatterns = [
@@ -13,7 +13,8 @@ urlpatterns = [
 
     # ✅ Profile Routes
     path('profile/', profile_view, name='profile'),
-    path('profile/edit/', ProfileUpdateView.as_view(), name='profile_edit'),
+    path('profile/edit/', profile_edit, name='profile_edit'),  
+    path('profile/<str:username>/', user_profile, name='user_profile'), 
 
     # ✅ Feed & Posts Routes
     path('feed/', feed_view, name='feed'),
@@ -26,10 +27,11 @@ urlpatterns = [
     path('comment/<int:comment_id>/delete/', delete_comment, name='delete_comment'),
 
     # ✅ Private Messaging (DMs)
-    path('messages/', message_list, name='message_list'),  # Inbox
-    path('messages/send/<int:receiver_id>/', send_message, name='send_message'),  # Send a message
-    path('messages/thread/<int:receiver_id>/', message_thread, name='message_thread'),  # View message thread
+    path('messages/', message_list, name='message_list'),
+    path('messages/send/<int:receiver_id>/', send_message, name='send_message'),
+    path('messages/thread/<int:receiver_id>/', message_thread, name='message_thread'),
 ]
+
 
 
 

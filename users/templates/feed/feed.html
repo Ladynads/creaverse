@@ -18,7 +18,11 @@
 <ul>
     {% for post in posts %}
         <li>
-            <strong>{{ post.user.username }}</strong> - {{ post.created_at|date:"F j, Y, g:i a" }}
+            <strong>
+                <a href="{% url 'user_profile' post.user.username %}">
+                    {{ post.user.username }}
+                </a>
+            </strong> - {{ post.created_at|date:"F j, Y, g:i a" }}
             <p>{{ post.content }}</p>
 
             <!-- ✅ Like Button (AJAX) -->
@@ -36,7 +40,11 @@
             <ul>
                 {% for comment in post.comments.all %}
                     <li>
-                        <strong>{{ comment.user.username }}:</strong> {{ comment.content }}
+                        <strong>
+                            <a href="{% url 'user_profile' comment.user.username %}">
+                                {{ comment.user.username }}
+                            </a>
+                        </strong>: {{ comment.content }}
                         {% if comment.user == user or post.user == user %}
                             <form action="{% url 'delete_comment' comment.id %}" method="POST" style="display:inline;">
                                 {% csrf_token %}
@@ -119,5 +127,6 @@ document.addEventListener("DOMContentLoaded", function() {
 </script>
 
 {% endblock %}
+
 
 
