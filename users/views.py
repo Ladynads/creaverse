@@ -6,8 +6,9 @@ from django.urls import reverse_lazy  # Import reverse_lazy for redirects
 from django.views import View  # Import generic View class
 from django.contrib.auth.decorators import login_required  # Restrict access to profile view
 from django.utils.decorators import method_decorator  # Restrict access to profile edit view
-from django.views.generic import UpdateView  # Create an UpdateView for profile editing
-from django.contrib.auth import get_user_model  # Get the custom user model
+from django.views.generic import UpdateView, ListView, CreateView  
+from django.contrib.auth import get_user_model
+from .models import Post  # Import Post model
 
 # User Registration View
 def register(request):
@@ -49,3 +50,22 @@ class ProfileUpdateView(UpdateView):
 
     def get_object(self):
         return self.request.user  # Only allows editing of the logged-in user
+
+# Feed View: Shows all posts
+class FeedView(ListView):
+    model = Post
+    template_name = 'users/feed.html'
+    context_object_name = 'posts'
+    ordering = ['-created_at']  # Show newest posts first
+
+# Create Post View: Allows users to create posts
+@method_decorator(login_required, name='dispatch')
+class CreatePostView(CreateView):
+    model = Post
+    fields = ['content']
+    template_name = 'users/new_post.html'
+    success_url = reverse_lazy('feed')  # Redirect to feed after posting
+
+    def form_valid(self, form):
+        form.instance.user = self.request.user  # Set post owner
+        return super().form_valid(form)

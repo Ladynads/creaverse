@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>CreatorVerse Feed</h2>
+
+{% if user.is_authenticated %}
+    <a href="{% url 'new_post' %}">Create a Post</a>  <!-- Add Post Button -->
+{% endif %}
+
+<ul>
+    {% for post in posts %}
+        <li>
+            <strong>{{ post.user.username }}</strong> - {{ post.created_at|date:"F j, Y, g:i a" }}
+            <p>{{ post.content }}</p>
+        </li>
+    {% empty %}
+        <p>No posts yet. Be the first to post!</p>
+    {% endfor %}
+</ul>
+{% endblock %}
