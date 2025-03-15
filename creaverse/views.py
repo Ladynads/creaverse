@@ -1,4 +1,4 @@
-from django.http import HttpResponse
+from django.shortcuts import render
 
 def home(request):
-    return HttpResponse("Hello, CreatorVerse!")
+    return render(request, 'home.html')  # Ensure this file exists inside templates/

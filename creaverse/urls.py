@@ -18,11 +18,11 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
-from creaverse.views import home  # Import home from views.py
+from creaverse.views import home  # Import the home view
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', home, name='home'),
+    path('', home, name='home'),  # Use the home view instead of HttpResponse
     path('users/', include('users.urls')),
 ]
 
