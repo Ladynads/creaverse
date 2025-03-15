@@ -2,7 +2,7 @@ from django.urls import path
 from .views import (
     register, CustomLoginView, CustomLogoutView, profile_view, ProfileUpdateView, 
     feed_view, create_post, like_post, add_comment, delete_post, delete_comment,
-    message_list, send_message, message_detail
+    message_list, send_message, message_thread
 )
 
 urlpatterns = [
@@ -26,10 +26,11 @@ urlpatterns = [
     path('comment/<int:comment_id>/delete/', delete_comment, name='delete_comment'),
 
     # ✅ Private Messaging (DMs)
-    path('messages/', message_list, name='message_list'),  # View all conversations
-    path('messages/send/<int:receiver_id>/', send_message, name='send_message'),  # Send a new message
-    path('messages/conversation/<int:receiver_id>/', message_detail, name='message_detail'),  # View conversation with a specific user
+    path('messages/', message_list, name='message_list'),  # Inbox
+    path('messages/send/<int:receiver_id>/', send_message, name='send_message'),  # Send a message
+    path('messages/thread/<int:receiver_id>/', message_thread, name='message_thread'),  # View message thread
 ]
+
 
 
 

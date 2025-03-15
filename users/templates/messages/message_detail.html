@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>💬 Conversation with {{ receiver.username }}</h2>
+
+<ul>
+    {% for message in messages %}
+        <li>
+            <strong>{{ message.sender.username }}</strong>: {{ message.content }} 
+            <small>({{ message.created_at|date:"F j, Y, g:i a" }})</small>
+        </li>
+    {% empty %}
+        <li>No messages yet. Start the conversation!</li>
+    {% endfor %}
+</ul>
+
+<!-- Send a new message in the conversation -->
+<form method="POST">
+    {% csrf_token %}
+    <textarea name="content" placeholder="Type your reply here..." required></textarea>
+    <button type="submit">Send</button>
+</form>
+
+<a href="{% url 'message_list' %}">⬅ Back to Inbox</a>
+{% endblock %}

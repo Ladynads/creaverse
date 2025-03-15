@@ -22,10 +22,12 @@ from creaverse.views import home  # Import the home view
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', home, name='home'),  # Use the home view instead of HttpResponse
-    path('users/', include('users.urls')),
+    path('', home, name='home'),  # Home page
+    path('users/', include('users.urls')),  # All user-related URLs
+    path('messages/', include('users.urls')),  # Ensure messages work correctly under /messages/
 ]
 
 # Serve media files during development
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+

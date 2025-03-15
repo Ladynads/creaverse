@@ -6,8 +6,9 @@ from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
-from django.views.generic import UpdateView, CreateView, ListView
+from django.views.generic import UpdateView, CreateView
 from django.contrib.auth import get_user_model
+from django.db.models import Max
 from .forms import CustomUserCreationForm
 from .models import Post, Comment, Message
 
@@ -125,11 +126,20 @@ def delete_comment(request, comment_id):
 
 
 # ✅ Private Messaging (DMs)
-# ✅ View All Messages (Inbox)
+# ✅ View All Conversations (Inbox - Latest Message Per User)
 @login_required
 def message_list(request):
-    messages = Message.objects.filter(receiver=request.user).order_by('-created_at')
-    return render(request, 'messages/inbox.html', {'messages': messages})
+    # ✅ Get latest message per conversation (grouped by user)
+    latest_messages = Message.objects.filter(
+        receiver=request.user
+    ).values('sender').annotate(latest_message=Max('created_at')).order_by('-latest_message')
+
+    conversations = []
+    for msg in latest_messages:
+        latest_msg = Message.objects.filter(sender_id=msg['sender'], created_at=msg['latest_message']).first()
+        conversations.append(latest_msg)
+
+    return render(request, 'messages/inbox.html', {'messages': conversations})
 
 
 # ✅ Send Message
@@ -146,9 +156,25 @@ def send_message(request, receiver_id):
     return render(request, 'messages/send_message.html', {'receiver': receiver})
 
 
-# ✅ View Conversation
+# ✅ View Message Thread (Conversation)
 @login_required
-def message_detail(request, conversation_id):
-    conversation = get_object_or_404(Message, id=conversation_id, receiver=request.user)
-    return render(request, 'messages/message_detail.html', {'conversation': conversation})
+def message_thread(request, receiver_id):
+    receiver = get_object_or_404(get_user_model(), id=receiver_id)
+    
+    # ✅ Fetch messages between the logged-in user and receiver
+    messages = Message.objects.filter(
+        sender=request.user, receiver=receiver
+    ) | Message.objects.filter(
+        sender=receiver, receiver=request.user
+    )
+    
+    messages = messages.order_by('created_at')
+
+    # ✅ Mark received messages as read
+    unread_messages = messages.filter(receiver=request.user, is_read=False)
+    unread_messages.update(is_read=True)
+
+    return render(request, 'messages/message_thread.html', {'messages': messages, 'receiver': receiver})
+
+
 

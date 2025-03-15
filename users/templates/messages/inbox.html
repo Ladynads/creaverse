@@ -1,18 +1,22 @@
 {% extends "base.html" %}
 {% block content %}
-<h2>📩 Inbox</h2>
+<h2>📩 Your Conversations</h2>
+
 <ul>
     {% for message in messages %}
         <li>
             <a href="{% url 'message_thread' message.sender.id %}">
-                <strong>{{ message.sender.username }}</strong>: {{ message.content|truncatewords:10 }}
+                <strong>{{ message.sender.username }}</strong>: 
+                {{ message.content|truncatewords:10 }}
+                {% if not message.is_read %}
+                    <span style="color: red;">(New)</span>
+                {% endif %}
             </a>
-            {% if not message.is_read %}
-                <span style="color: red;">(New)</span>
-            {% endif %}
         </li>
     {% empty %}
-        <p>No messages yet.</p>
+        <p>No messages yet. Start a conversation!</p>
     {% endfor %}
 </ul>
 {% endblock %}
+
+
