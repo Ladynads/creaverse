@@ -3,18 +3,68 @@
 {% block content %}
 <h2>CreatorVerse Feed</h2>
 
+<!-- ✅ Create Post Button (Only for Logged-in Users) -->
 {% if user.is_authenticated %}
-    <a href="{% url 'new_post' %}">Create a Post</a>  <!-- Add Post Button -->
+    <a href="{% url 'new_post' %}">➕ Create a Post</a>  
 {% endif %}
 
+<hr>
+
+<!-- Display Posts -->
 <ul>
     {% for post in posts %}
         <li>
             <strong>{{ post.user.username }}</strong> - {{ post.created_at|date:"F j, Y, g:i a" }}
             <p>{{ post.content }}</p>
+
+            <!-- Like Button -->
+            <form action="{% url 'like_post' post.id %}" method="POST" style="display:inline;">
+                {% csrf_token %}
+                <button type="submit">
+                    👍 Like ({{ post.likes.count }})  <!-- Show Total Likes -->
+                </button>
+            </form>
+
+            <!-- Show Comments -->
+            <h4>Comments:</h4>
+            <ul>
+                {% for comment in post.comments.all %}
+                    <li>
+                        <strong>{{ comment.user.username }}:</strong> {{ comment.content }}
+                        {% if comment.user == user or post.user == user %}
+                            <form action="{% url 'delete_comment' comment.id %}" method="POST" style="display:inline;">
+                                {% csrf_token %}
+                                <button type="submit" style="color:red;">❌ Delete</button>
+                            </form>
+                        {% endif %}
+                    </li>
+                {% empty %}
+                    <li>No comments yet.</li>
+                {% endfor %}
+            </ul>
+
+            <!-- Add Comment Form -->
+            {% if user.is_authenticated %}
+                <form action="{% url 'add_comment' post.id %}" method="POST">
+                    {% csrf_token %}
+                    <input type="text" name="content" placeholder="Write a comment..." required>
+                    <button type="submit">💬 Comment</button>
+                </form>
+            {% endif %}
+
+            <!-- Delete Post Button (Only for Post Owner) -->
+            {% if post.user == user %}
+                <form action="{% url 'delete_post' post.id %}" method="POST" style="display:inline;">
+                    {% csrf_token %}
+                    <button type="submit" style="color:red;">🗑️ Delete Post</button>
+                </form>
+            {% endif %}
+            
+            <hr>
         </li>
     {% empty %}
         <p>No posts yet. Be the first to post!</p>
     {% endfor %}
 </ul>
 {% endblock %}
+
