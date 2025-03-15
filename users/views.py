@@ -6,10 +6,10 @@ from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
-from django.views.generic import UpdateView, CreateView
+from django.views.generic import UpdateView, CreateView, ListView
 from django.contrib.auth import get_user_model
 from .forms import CustomUserCreationForm
-from .models import Post, Comment
+from .models import Post, Comment, Message
 
 # ✅ User Registration View
 def register(request):
@@ -122,3 +122,33 @@ def delete_comment(request, comment_id):
         comment.delete()
 
     return redirect('feed')
+
+
+# ✅ Private Messaging (DMs)
+# ✅ View All Messages (Inbox)
+@login_required
+def message_list(request):
+    messages = Message.objects.filter(receiver=request.user).order_by('-created_at')
+    return render(request, 'messages/inbox.html', {'messages': messages})
+
+
+# ✅ Send Message
+@login_required
+def send_message(request, receiver_id):
+    receiver = get_object_or_404(get_user_model(), id=receiver_id)
+
+    if request.method == "POST":
+        content = request.POST.get('content')
+        if content.strip():
+            Message.objects.create(sender=request.user, receiver=receiver, content=content)
+            return redirect('message_list')
+
+    return render(request, 'messages/send_message.html', {'receiver': receiver})
+
+
+# ✅ View Conversation
+@login_required
+def message_detail(request, conversation_id):
+    conversation = get_object_or_404(Message, id=conversation_id, receiver=request.user)
+    return render(request, 'messages/message_detail.html', {'conversation': conversation})
+

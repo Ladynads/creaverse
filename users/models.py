@@ -40,3 +40,20 @@ class Comment(models.Model):
 
     def __str__(self):
         return f"Comment by {self.user.username} on {self.post}"
+
+
+# ✅ Private Message Model (DMs)
+class Message(models.Model):
+    sender = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name="sent_messages")  # Who sent the message
+    receiver = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name="received_messages")  # Who received it
+    content = models.TextField()  # Message text
+    created_at = models.DateTimeField(auto_now_add=True)  # Auto timestamp
+    is_read = models.BooleanField(default=False)  # Track if the message is read
+
+    class Meta:
+        ordering = ['-created_at']  # Show latest messages first
+
+    def __str__(self):
+        return f"Message from {self.sender.username} to {self.receiver.username} - {self.created_at.strftime('%Y-%m-%d %H:%M')}"
+
+
