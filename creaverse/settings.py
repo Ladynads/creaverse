@@ -48,18 +48,14 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'whitenoise.runserver_nostatic', 
+    'whitenoise.runserver_nostatic',
     'creaverse',
     'users',
 
-    # ✅ AI & Data Science Tools (Ensure they are installed)
-    'scikit_learn',  # Machine learning
-    'numpy',  # Efficient numerical operations
-    'pandas',  # Data handling
-    'nltk',  # Natural Language Processing
-
     # ✅ Debugging Tools (Only for local development)
+    'django_debug_toolbar',
 ]
+
 
 if DEBUG:
     INSTALLED_APPS.append('debug_toolbar')
