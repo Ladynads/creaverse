@@ -74,4 +74,14 @@ class Message(models.Model):
     def __str__(self):
         return f"Message from {self.sender.username} to {self.receiver.username} - {self.created_at.strftime('%Y-%m-%d %H:%M')}"
 
+# User Interaction Model
+class UserInteraction(models.Model):
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='interactions')
+    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='interactions')
+    liked = models.BooleanField(default=False)  # If the user liked the post
+    commented = models.BooleanField(default=False)  # If the user commented
+    viewed = models.BooleanField(default=False)  # If the user viewed it
+    timestamp = models.DateTimeField(auto_now=True)  # Last interaction time
 
+    def __str__(self):
+        return f"{self.user.username} - {self.post.id} ({'Liked' if self.liked else ''} {'Commented' if self.commented else ''})"

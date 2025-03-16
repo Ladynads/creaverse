@@ -21,7 +21,6 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Add the project root directory to the Python path
 sys.path.append(str(BASE_DIR))
 
-
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
@@ -29,21 +28,16 @@ sys.path.append(str(BASE_DIR))
 SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'change-this-for-local-dev-only')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = True  # Change to False in production
 
 # Ensure the app is only served over HTTPS in production
-if not DEBUG:  # Only apply these settings when DEBUG is False (i.e., in production)
+if not DEBUG:  
     SECURE_HSTS_SECONDS = 31536000  # 1 year
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
-
-    SECURE_SSL_REDIRECT = False  # Redirect all HTTP requests to HTTPS
-
+    SECURE_SSL_REDIRECT = True  # Redirect all HTTP requests to HTTPS
 
 ALLOWED_HOSTS = os.getenv('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1,creaverse-813bebe0de8e.herokuapp.com').split(',')
-
-
-
 
 # Application definition
 
@@ -57,14 +51,25 @@ INSTALLED_APPS = [
     'whitenoise.runserver_nostatic', 
     'creaverse',
     'users',
+
+    # ✅ AI & Data Science Tools (Ensure they are installed)
+    'scikit_learn',  # Machine learning
+    'numpy',  # Efficient numerical operations
+    'pandas',  # Data handling
+    'nltk',  # Natural Language Processing
+
+    # ✅ Debugging Tools (Only for local development)
 ]
+
+if DEBUG:
+    INSTALLED_APPS.append('debug_toolbar')
 
 # Custom user model
 AUTH_USER_MODEL = 'users.CustomUser'
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',  # Add this for serving static files in production
+    'whitenoise.middleware.WhiteNoiseMiddleware',  
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -73,14 +78,17 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
+if DEBUG:
+    MIDDLEWARE.append('debug_toolbar.middleware.DebugToolbarMiddleware')
+
 ROOT_URLCONF = 'creaverse.urls'
 
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
         'DIRS': [
-            BASE_DIR / 'templates',  # Global templates
-            BASE_DIR / 'users' / 'templates',  # User-related templates
+            BASE_DIR / 'templates',  
+            BASE_DIR / 'users' / 'templates',  
         ], 
         'APP_DIRS': True,
         'OPTIONS': {
@@ -96,49 +104,26 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'creaverse.wsgi.application'
 
-
 # Database
-# https://docs.djangoproject.com/en/4.2/ref/settings/#databases
-
 DATABASES = {
-    'default': dj_database_url.config(default='sqlite:///db.sqlite3')  # Update this line
+    'default': dj_database_url.config(default='sqlite:///db.sqlite3')  
 }
 
-
 # Password validation
-# https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
-
 AUTH_PASSWORD_VALIDATORS = [
-    {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
-    },
+    {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
 ]
 
-
 # Internationalization
-# https://docs.djangoproject.com/en/4.2/topics/i18n/
-
 LANGUAGE_CODE = 'en-us'
-
 TIME_ZONE = 'UTC'
-
 USE_I18N = True
-
 USE_TZ = True
 
-
 # Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/4.2/howto/static-files/
-
 STATIC_URL = 'static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles' 
 STATICFILES_DIRS = [BASE_DIR / 'static']
@@ -149,15 +134,18 @@ MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
 # Default primary key field type
-# https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
-
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Security settings
-SESSION_COOKIE_SECURE = True  # Ensures session cookies are only sent over HTTPS
-CSRF_COOKIE_SECURE = True  # Ensures CSRF cookie is only sent over HTTPS
+SESSION_COOKIE_SECURE = True  
+CSRF_COOKIE_SECURE = True  
 
 # Authentication Redirects
-LOGIN_REDIRECT_URL = 'home'  # Redirect after successful login
-LOGOUT_REDIRECT_URL = 'home'  # Redirect after logout
-LOGIN_URL = 'login'  # Redirect if login is required
+LOGIN_REDIRECT_URL = 'home'  
+LOGOUT_REDIRECT_URL = 'home'  
+LOGIN_URL = 'login'  
+
+# ✅ Debug Toolbar Config (Only if DEBUG=True)
+INTERNAL_IPS = [
+    "127.0.0.1",
+]
