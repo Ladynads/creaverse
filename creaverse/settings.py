@@ -52,10 +52,7 @@ INSTALLED_APPS = [
     'creaverse',
     'users',
 
-    # ✅ Debugging Tools (Only for local development)
-    'django_debug_toolbar',
 ]
-
 
 if DEBUG:
     INSTALLED_APPS.append('debug_toolbar')
