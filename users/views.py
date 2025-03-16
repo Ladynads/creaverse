@@ -10,7 +10,7 @@ from django.views.generic import UpdateView
 from django.contrib.auth import get_user_model
 from django.db.models import Max
 from .forms import CustomUserCreationForm
-from .models import Post, Comment, Message
+from .models import CustomUser, Post, Comment, Message
 
 User = get_user_model()
 
@@ -66,9 +66,14 @@ def profile_edit(request):
 # ✅ View Other User Profiles
 @login_required
 def user_profile(request, username):
-    profile_user = get_object_or_404(User, username=username)
-    posts = Post.objects.filter(user=profile_user).order_by('-created_at')
-    return render(request, 'users/user_profile.html', {'profile_user': profile_user, 'posts': posts})
+    profile_user = get_object_or_404(CustomUser, username=username)
+    posts = Post.objects.filter(user=profile_user)
+
+    return render(request, 'users/user_profile.html', {
+        'profile_user': profile_user,
+        'posts': posts
+    })
+
 
 
 # ✅ Feed View (Latest Posts)

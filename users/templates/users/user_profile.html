@@ -4,7 +4,8 @@
 
 <!-- ✅ Profile Image (Handles missing images) -->
 {% if profile_user.profile_image %}
-    <img src="{{ profile_user.profile_image.url }}" alt="Profile Image" width="100">
+    <img src="{{ profile_user.get_profile_image }}" alt="Profile Image" width="100">
+
 {% else %}
     <p><em>No profile image</em></p>
 {% endif %}

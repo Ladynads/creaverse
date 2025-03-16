@@ -14,6 +14,13 @@ class CustomUser(AbstractUser):
 
     def __str__(self):
         return self.username
+    
+     # ✅ Function to return profile image or default static image
+    def get_profile_image(self):
+        """Returns the user's profile image or the default static avatar."""
+        if self.profile_image:
+            return self.profile_image.url
+        return static("profile_pics/default_profile.webp")
 
     # ✅ Get profile image or default
     def get_profile_image(self):
