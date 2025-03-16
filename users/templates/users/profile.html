@@ -1,14 +1,17 @@
 {% extends "base.html" %}
+{% load static %}
+
 {% block content %}
 <h2>👤 {{ profile_user.username }}'s Profile</h2>
 
-{% if profile_user.profile_image %}
-    <img src="{{ profile_user.profile_image.url }}" alt="Profile Image" width="100">
+{% if user.profile_image %}
+    <img src="{{ user.profile_image.url }}" alt="Profile Image" width="100">
 {% else %}
     <img src="{% static 'profile_pics/default_profile.webp' %}" alt="Default Profile Image" width="100">
 {% endif %}
 
-<p><strong>Bio:</strong> {{ profile_user.bio|default:"No bio yet." }}</p>
+
+<p><strong>Bio:</strong> {{ user.bio|default_if_none:"No bio yet." }}</p>
 <p><strong>Email:</strong> {{ profile_user.email }}</p>
 
 <a href="{% url 'profile_edit' %}">✏ Edit Profile</a>
