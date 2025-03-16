@@ -8,7 +8,7 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import UpdateView
 from django.contrib.auth import get_user_model
-from django.db.models import Max
+from django.db.models import Max, Prefetch
 from .forms import CustomUserCreationForm
 from .models import CustomUser, Post, Comment, Message
 
@@ -67,7 +67,7 @@ def profile_edit(request):
 @login_required
 def user_profile(request, username):
     profile_user = get_object_or_404(CustomUser, username=username)
-    posts = Post.objects.filter(user=profile_user)
+    posts = Post.objects.filter(user=profile_user).prefetch_related('comments')
 
     return render(request, 'users/user_profile.html', {
         'profile_user': profile_user,
@@ -75,11 +75,14 @@ def user_profile(request, username):
     })
 
 
-
-# ✅ Feed View (Latest Posts)
+# ✅ Feed View (Latest Posts with Prefetch for Performance)
 @login_required
 def feed_view(request):
-    posts = Post.objects.all().order_by('-created_at')
+    posts = Post.objects.all().prefetch_related(
+        'user', 
+        Prefetch('comments', queryset=Comment.objects.select_related('user'))
+    ).order_by('-created_at')
+
     return render(request, 'feed/feed.html', {'posts': posts})
 
 
@@ -109,7 +112,7 @@ def like_post(request, post_id):
     return JsonResponse({'liked': liked, 'total_likes': post.total_likes()})
 
 
-# ✅ Add Comment
+# ✅ Add Comment (AJAX Support)
 @login_required
 def add_comment(request, post_id):
     post = get_object_or_404(Post, id=post_id)
@@ -117,9 +120,15 @@ def add_comment(request, post_id):
     if request.method == "POST":
         content = request.POST.get('content')
         if content:
-            Comment.objects.create(user=request.user, post=post, content=content)
-
-    return redirect('feed')
+            comment = Comment.objects.create(user=request.user, post=post, content=content)
+            return JsonResponse({
+                'success': True,
+                'username': request.user.username,
+                'comment': comment.content,
+                'created_at': comment.created_at.strftime("%B %d, %Y %H:%M"),
+                'comment_id': comment.id
+            })
+    return JsonResponse({'success': False})
 
 
 # ✅ Delete Post
@@ -147,7 +156,6 @@ def delete_comment(request, comment_id):
 # ✅ View All Conversations (Latest Message Per User)
 @login_required
 def message_list(request):
-    # ✅ Get latest message per conversation (grouped by user)
     latest_messages = Message.objects.filter(
         receiver=request.user
     ).values('sender').annotate(latest_message=Max('created_at')).order_by('-latest_message')
@@ -179,7 +187,6 @@ def send_message(request, receiver_id):
 def message_thread(request, receiver_id):
     receiver = get_object_or_404(get_user_model(), id=receiver_id)
     
-    # ✅ Fetch messages between the logged-in user and receiver
     messages = Message.objects.filter(
         sender=request.user, receiver=receiver
     ) | Message.objects.filter(
@@ -193,3 +200,4 @@ def message_thread(request, receiver_id):
     unread_messages.update(is_read=True)
 
     return render(request, 'messages/message_thread.html', {'messages': messages, 'receiver': receiver})
+
