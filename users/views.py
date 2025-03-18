@@ -8,7 +8,9 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import UpdateView
 from django.contrib.auth import get_user_model
-from django.db.models import Max, Prefetch
+from django.db.models import Count, F, ExpressionWrapper, FloatField, DurationField
+from django.utils.timezone import now
+import datetime
 from .forms import CustomUserCreationForm
 from .models import CustomUser, Post, Comment, Message
 
@@ -75,15 +77,26 @@ def user_profile(request, username):
     })
 
 
-# ✅ Feed View (Latest Posts with Prefetch for Performance)
+# ✅ Trending Feed View (Trending + Latest Posts)
 @login_required
 def feed_view(request):
-    posts = Post.objects.all().prefetch_related(
-        'user', 
-        Prefetch('comments', queryset=Comment.objects.select_related('user'))
-    ).order_by('-created_at')
+    """
+    Fetches and displays posts, prioritizing trending posts based on likes, comments, and recency.
+    """
+    time_threshold = now() - datetime.timedelta(days=7)  # Posts older than 7 days decay in ranking
+
+    posts = Post.objects.annotate(
+        num_likes=Count('likes'),
+        num_comments=Count('comments'),
+        age_factor=ExpressionWrapper(
+            (F('created_at') - time_threshold) / datetime.timedelta(days=1),  # Converts duration to days
+            output_field=FloatField()
+        ),
+        trending_score=F('num_likes') * 3 + F('num_comments') * 2 + F('age_factor')
+    ).order_by('-trending_score', '-created_at')
 
     return render(request, 'feed/feed.html', {'posts': posts})
+
 
 
 # ✅ Create Post
@@ -200,4 +213,5 @@ def message_thread(request, receiver_id):
     unread_messages.update(is_read=True)
 
     return render(request, 'messages/message_thread.html', {'messages': messages, 'receiver': receiver})
+
 
