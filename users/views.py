@@ -3,17 +3,16 @@ from django.contrib.auth import login, logout
 from django.contrib.auth.views import LoginView, LogoutView
 from django.urls import reverse_lazy
 from django.contrib.auth.decorators import login_required
-from django.utils.decorators import method_decorator
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
-from django.views.generic import UpdateView
-from django.contrib.auth import get_user_model
-from django.db.models import Count, F, ExpressionWrapper, FloatField, DurationField
+from django.db.models import Count, F, ExpressionWrapper, FloatField, Q, Max
 from django.utils.timezone import now
 import datetime
+from django.contrib.auth import get_user_model
 from .forms import CustomUserCreationForm
 from .models import CustomUser, Post, Comment, Message
 
+# ✅ User model
 User = get_user_model()
 
 # ✅ User Registration View
@@ -28,11 +27,9 @@ def register(request):
         form = CustomUserCreationForm()
     return render(request, 'users/register.html', {'form': form})
 
-
 # ✅ Login View
 class CustomLoginView(LoginView):
     template_name = 'users/login.html'
-
 
 # ✅ Logout View (POST request only for security)
 class CustomLogoutView(LogoutView):
@@ -42,12 +39,10 @@ class CustomLogoutView(LogoutView):
         logout(request)
         return redirect(self.next_page)
 
-
 # ✅ View Own Profile
 @login_required
 def profile_view(request):
     return render(request, 'users/profile.html', {'user': request.user})
-
 
 # ✅ Edit Profile
 @login_required
@@ -64,7 +59,6 @@ def profile_edit(request):
 
     return render(request, 'users/profile_edit.html')
 
-
 # ✅ View Other User Profiles
 @login_required
 def user_profile(request, username):
@@ -76,16 +70,35 @@ def user_profile(request, username):
         'posts': posts
     })
 
-
-# ✅ Trending Feed View (Trending + Latest Posts)
+# ✅ AI-Powered Feed View (Trending + Personalized Recommendations)
 @login_required
 def feed_view(request):
     """
-    Fetches and displays posts, prioritizing trending posts based on likes, comments, and recency.
+    Fetches posts based on:
+    1. AI-Powered Personalized Recommendations (shared keywords).
+    2. Trending score (likes, comments, recency).
+    3. Most recent posts (if no recommendations apply).
     """
-    time_threshold = now() - datetime.timedelta(days=7)  # Posts older than 7 days decay in ranking
+    time_threshold = now() - datetime.timedelta(days=7)  # Older posts lose priority
 
-    posts = Post.objects.annotate(
+    # ✅ Get posts the user interacted with
+    user_interactions = Post.objects.filter(
+        Q(likes=request.user) | Q(comments__user=request.user)
+    ).distinct()
+
+    # ✅ Extract keywords from those posts
+    interacted_keywords = set()
+    for post in user_interactions:
+        if post.keywords:
+            interacted_keywords.update(post.keywords.split(', '))  # Convert keywords into a set
+
+    # ✅ Get recommended posts based on shared keywords
+    recommended_posts = Post.objects.filter(
+        Q(keywords__in=interacted_keywords)
+    ).exclude(user=request.user).distinct()
+
+    # ✅ Fetch trending posts
+    trending_posts = Post.objects.annotate(
         num_likes=Count('likes'),
         num_comments=Count('comments'),
         age_factor=ExpressionWrapper(
@@ -95,9 +108,21 @@ def feed_view(request):
         trending_score=F('num_likes') * 3 + F('num_comments') * 2 + F('age_factor')
     ).order_by('-trending_score', '-created_at')
 
-    return render(request, 'feed/feed.html', {'posts': posts})
+    # ✅ Fetch latest posts (for fallback)
+    latest_posts = Post.objects.order_by('-created_at')
 
+    # ✅ Prioritize AI-recommended posts
+    recommended_posts_list = list(recommended_posts)
+    trending_posts_list = list(trending_posts)
+    latest_posts_list = list(latest_posts)
 
+    # ✅ Merge lists in the correct order
+    all_posts = recommended_posts_list + trending_posts_list + latest_posts_list
+
+    # ✅ Remove duplicates while preserving order
+    unique_posts = list({post.id: post for post in all_posts}.values())
+
+    return render(request, 'feed/feed.html', {'posts': unique_posts})
 
 # ✅ Create Post
 @login_required
@@ -107,7 +132,6 @@ def create_post(request):
         if content.strip():
             Post.objects.create(user=request.user, content=content)
     return redirect("feed")
-
 
 # ✅ Like/Unlike a Post (AJAX)
 @csrf_exempt  
@@ -123,7 +147,6 @@ def like_post(request, post_id):
         liked = True
 
     return JsonResponse({'liked': liked, 'total_likes': post.total_likes()})
-
 
 # ✅ Add Comment (AJAX Support)
 @login_required
@@ -143,7 +166,6 @@ def add_comment(request, post_id):
             })
     return JsonResponse({'success': False})
 
-
 # ✅ Delete Post
 @login_required
 def delete_post(request, post_id):
@@ -154,7 +176,6 @@ def delete_post(request, post_id):
 
     return redirect('feed')
 
-
 # ✅ Delete Comment
 @login_required
 def delete_comment(request, comment_id):
@@ -164,7 +185,6 @@ def delete_comment(request, comment_id):
         comment.delete()
 
     return redirect('feed')
-
 
 # ✅ View All Conversations (Latest Message Per User)
 @login_required
@@ -180,7 +200,6 @@ def message_list(request):
 
     return render(request, 'messages/inbox.html', {'messages': conversations})
 
-
 # ✅ Send Message
 @login_required
 def send_message(request, receiver_id):
@@ -193,7 +212,6 @@ def send_message(request, receiver_id):
             return redirect('message_list')
 
     return render(request, 'messages/send_message.html', {'receiver': receiver})
-
 
 # ✅ View Message Thread (Conversation)
 @login_required
@@ -213,5 +231,9 @@ def message_thread(request, receiver_id):
     unread_messages.update(is_read=True)
 
     return render(request, 'messages/message_thread.html', {'messages': messages, 'receiver': receiver})
+
+
+
+
 
 

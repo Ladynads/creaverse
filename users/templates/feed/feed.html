@@ -15,7 +15,7 @@
 <hr>
 
 <!-- ✅ Display Posts -->
-<ul>
+<ul id="feed-posts">
     {% for post in posts %}
         <li>
             <strong>
@@ -37,7 +37,7 @@
 
             <!-- ✅ Show Comments -->
             <h4>💬 Comments:</h4>
-            <ul>
+            <ul id="comment-list-{{ post.id }}">
                 {% for comment in post.comments.all %}
                     <li>
                         <strong>
@@ -57,9 +57,9 @@
                 {% endfor %}
             </ul>
 
-            <!-- ✅ Add Comment Form -->
+            <!-- ✅ Add Comment Form (AJAX) -->
             {% if user.is_authenticated %}
-                <form action="{% url 'add_comment' post.id %}" method="POST">
+                <form class="comment-form" data-post-id="{{ post.id }}">
                     {% csrf_token %}
                     <input type="text" name="content" placeholder="Write a comment..." required>
                     <button type="submit">💬 Comment</button>
@@ -81,34 +81,84 @@
     {% endfor %}
 </ul>
 
-<!-- ✅ JavaScript for AJAX Like System -->
+<!-- ✅ JavaScript for AJAX Like & Comment System -->
 <script>
-document.addEventListener("DOMContentLoaded", function() {
-    document.querySelectorAll(".like-btn").forEach(button => {
-        button.addEventListener("click", function() {
-            let postId = this.dataset.postId;
-            let url = `{% url 'like_post' 999999 %}`.replace('999999', postId); // ✅ Dynamic URL
+document.addEventListener("DOMContentLoaded", function () {
+    // ✅ Function to Refresh Feed without Reloading
+    function refreshFeed() {
+        fetch("{% url 'feed' %}")  // Fetch fresh posts from the backend
+        .then(response => response.text())
+        .then(html => {
+            let parser = new DOMParser();
+            let doc = parser.parseFromString(html, "text/html");
+            let newPosts = doc.querySelector("ul#feed-posts").innerHTML;  // Get updated posts list
+            document.querySelector("ul#feed-posts").innerHTML = newPosts;  // Replace old posts with new ones
+            attachLikeHandlers();  // Reattach event listeners
+            attachCommentHandlers();
+        })
+        .catch(error => console.error("Error fetching feed:", error));
+    }
 
-            fetch(url, {
-                method: "POST",
-                headers: {
-                    "X-CSRFToken": getCookie("csrftoken"),
-                    "Content-Type": "application/json"
-                }
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.liked) {
-                    this.innerHTML = "❤️ Unlike";
-                } else {
-                    this.innerHTML = "🤍 Like";
-                }
-                document.querySelector(`#like-count-${postId}`).textContent = data.total_likes;
-            })
-            .catch(error => console.error("Error:", error));
+    // ✅ AJAX for Likes
+    function attachLikeHandlers() {
+        document.querySelectorAll(".like-btn").forEach(button => {
+            button.addEventListener("click", function () {
+                let postId = this.dataset.postId;
+                let url = `{% url 'like_post' 999999 %}`.replace('999999', postId); // ✅ Dynamic URL
+
+                fetch(url, {
+                    method: "POST",
+                    headers: {
+                        "X-CSRFToken": getCookie("csrftoken"),
+                        "Content-Type": "application/json"
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.liked) {
+                        this.innerHTML = "❤️ Unlike";
+                    } else {
+                        this.innerHTML = "🤍 Like";
+                    }
+                    document.querySelector(`#like-count-${postId}`).textContent = data.total_likes;
+                    refreshFeed();  // Refresh feed after like
+                })
+                .catch(error => console.error("Error:", error));
+            });
         });
-    });
+    }
 
+    // ✅ AJAX for Comments
+    function attachCommentHandlers() {
+        document.querySelectorAll(".comment-form").forEach(form => {
+            form.addEventListener("submit", function (event) {
+                event.preventDefault();  // ✅ Prevent default form submission
+                let postId = this.dataset.postId;
+                let url = `{% url 'add_comment' 999999 %}`.replace('999999', postId);
+                let formData = new FormData(this);
+                
+                fetch(url, {
+                    method: "POST",
+                    headers: { "X-CSRFToken": getCookie("csrftoken") },
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        let commentList = document.querySelector(`#comment-list-${postId}`);
+                        let newComment = document.createElement("li");
+                        newComment.innerHTML = `<strong><a href="/users/${data.username}">${data.username}</a></strong>: ${data.comment}`;
+                        commentList.appendChild(newComment);
+                        this.reset();  // ✅ Clear input after submission
+                        refreshFeed();  // Refresh feed after comment
+                    }
+                })
+                .catch(error => console.error("Error:", error));
+            });
+        });
+    }
+
+    // ✅ Function to get CSRF token
     function getCookie(name) {
         let cookieValue = null;
         if (document.cookie && document.cookie !== "") {
@@ -123,10 +173,18 @@ document.addEventListener("DOMContentLoaded", function() {
         }
         return cookieValue;
     }
+
+    // ✅ Auto-refresh every 10 seconds (Optional)
+    setInterval(refreshFeed, 10000);  // Refresh every 10 seconds
+
+    attachLikeHandlers();  // Attach like event listeners on page load
+    attachCommentHandlers();  // Attach comment event listeners on page load
 });
 </script>
 
 {% endblock %}
+
+
 
 
 
