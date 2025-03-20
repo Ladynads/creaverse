@@ -5,31 +5,48 @@ from django.urls import reverse_lazy
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
-from django.db.models import Count, F, ExpressionWrapper, FloatField, Q, Max
-from django.utils.timezone import now
-import datetime
-from django.contrib.auth import get_user_model
+from django.core.mail import send_mail
+from django.conf import settings
 from .forms import CustomUserCreationForm
-from .models import CustomUser, Post, Comment, Message
+from .models import CustomUser, InviteCode, Message
 
 # ✅ User model
+from django.contrib.auth import get_user_model
 User = get_user_model()
 
-# ✅ User Registration View
+# ✅ Invite-Only User Registration View
 def register(request):
+    """Handles user registration with invite code verification."""
     if request.method == "POST":
         form = CustomUserCreationForm(request.POST, request.FILES)
+        invite_code = request.POST.get("invite_code")
+
         if form.is_valid():
+            # ✅ Validate invite code
+            try:
+                invite = InviteCode.objects.get(code=invite_code, used_by__isnull=True)
+            except InviteCode.DoesNotExist:
+                return render(request, 'users/register.html', {'form': form, 'error': "Invalid or used invite code!"})
+
             user = form.save()
+            invite.mark_used(user)  # ✅ Mark invite as used
             login(request, user)
-            return redirect('feed')  
+            return redirect('feed')
+
     else:
         form = CustomUserCreationForm()
+
     return render(request, 'users/register.html', {'form': form})
+
+# ✅ Home View
+def home_view(request):
+    return render(request, 'home.html')
+
 
 # ✅ Login View
 class CustomLoginView(LoginView):
     template_name = 'users/login.html'
+
 
 # ✅ Logout View (POST request only for security)
 class CustomLogoutView(LogoutView):
@@ -39,10 +56,12 @@ class CustomLogoutView(LogoutView):
         logout(request)
         return redirect(self.next_page)
 
+
 # ✅ View Own Profile
 @login_required
 def profile_view(request):
     return render(request, 'users/profile.html', {'user': request.user})
+
 
 # ✅ Edit Profile
 @login_required
@@ -59,178 +78,97 @@ def profile_edit(request):
 
     return render(request, 'users/profile_edit.html')
 
+
 # ✅ View Other User Profiles
 @login_required
 def user_profile(request, username):
     profile_user = get_object_or_404(CustomUser, username=username)
-    posts = Post.objects.filter(user=profile_user).prefetch_related('comments')
-
     return render(request, 'users/user_profile.html', {
         'profile_user': profile_user,
-        'posts': posts
     })
 
-# ✅ AI-Powered Feed View (Trending + Personalized Recommendations)
+# Invite View
 @login_required
-def feed_view(request):
-    """
-    Fetches posts based on:
-    1. AI-Powered Personalized Recommendations (shared keywords).
-    2. Trending score (likes, comments, recency).
-    3. Most recent posts (if no recommendations apply).
-    """
-    time_threshold = now() - datetime.timedelta(days=7)  # Older posts lose priority
+def invite_view(request):
+    """Render the invite page with user's invite codes."""
+    invite_codes = InviteCode.objects.filter(created_by=request.user)
+    return render(request, "users/invite.html", {"invite_codes": invite_codes})
 
-    # ✅ Get posts the user interacted with
-    user_interactions = Post.objects.filter(
-        Q(likes=request.user) | Q(comments__user=request.user)
-    ).distinct()
-
-    # ✅ Extract keywords from those posts
-    interacted_keywords = set()
-    for post in user_interactions:
-        if post.keywords:
-            interacted_keywords.update(post.keywords.split(', '))  # Convert keywords into a set
-
-    # ✅ Get recommended posts based on shared keywords
-    recommended_posts = Post.objects.filter(
-        Q(keywords__in=interacted_keywords)
-    ).exclude(user=request.user).distinct()
-
-    # ✅ Fetch trending posts
-    trending_posts = Post.objects.annotate(
-        num_likes=Count('likes'),
-        num_comments=Count('comments'),
-        age_factor=ExpressionWrapper(
-            (F('created_at') - time_threshold) / datetime.timedelta(days=1),  # Converts duration to days
-            output_field=FloatField()
-        ),
-        trending_score=F('num_likes') * 3 + F('num_comments') * 2 + F('age_factor')
-    ).order_by('-trending_score', '-created_at')
-
-    # ✅ Fetch latest posts (for fallback)
-    latest_posts = Post.objects.order_by('-created_at')
-
-    # ✅ Prioritize AI-recommended posts
-    recommended_posts_list = list(recommended_posts)
-    trending_posts_list = list(trending_posts)
-    latest_posts_list = list(latest_posts)
-
-    # ✅ Merge lists in the correct order
-    all_posts = recommended_posts_list + trending_posts_list + latest_posts_list
-
-    # ✅ Remove duplicates while preserving order
-    unique_posts = list({post.id: post for post in all_posts}.values())
-
-    return render(request, 'feed/feed.html', {'posts': unique_posts})
-
-# ✅ Create Post
+# ✅ Send Invite Email
 @login_required
-def create_post(request):
+@csrf_exempt
+def send_invite_email(request):
+    """Handles sending an invite code via email."""
     if request.method == "POST":
-        content = request.POST.get("content")
-        if content.strip():
-            Post.objects.create(user=request.user, content=content)
-    return redirect("feed")
+        data = request.POST if request.POST else request.body.decode('utf-8')
+        email = data.get('email')
+        code = data.get('code')
 
-# ✅ Like/Unlike a Post (AJAX)
-@csrf_exempt  
+        if email and code:
+            try:
+                send_mail(
+                    "You're Invited to Join CreatorVerse!",
+                    f"Hey there! 🎟 You've been invited to join CreatorVerse.\n\nUse this invite code to register: {code}\n\nSign up here: http://127.0.0.1:8000/register/",
+                    settings.DEFAULT_FROM_EMAIL,
+                    [email],
+                    fail_silently=False,
+                )
+                return JsonResponse({'success': True, 'message': 'Invite sent successfully!'})
+            except Exception as e:
+                return JsonResponse({'success': False, 'message': str(e)})
+
+    return JsonResponse({'success': False, 'message': 'Invalid request!'})
+
+
+# ✅ Generate Invite Code (For Users)
 @login_required
-def like_post(request, post_id):
-    post = get_object_or_404(Post, id=post_id)
+def generate_invite(request):
+    """Allows users to generate a limited number of invite codes."""
+    if InviteCode.objects.filter(created_by=request.user).count() >= 5:
+        return JsonResponse({"success": False, "error": "You have reached your invite limit!"})
 
-    if request.user in post.likes.all():
-        post.likes.remove(request.user)
-        liked = False
-    else:
-        post.likes.add(request.user)
-        liked = True
+    new_code = InviteCode.objects.create(created_by=request.user)
+    return JsonResponse({"success": True, "code": new_code.code})
 
-    return JsonResponse({'liked': liked, 'total_likes': post.total_likes()})
 
-# ✅ Add Comment (AJAX Support)
-@login_required
-def add_comment(request, post_id):
-    post = get_object_or_404(Post, id=post_id)
-
-    if request.method == "POST":
-        content = request.POST.get('content')
-        if content:
-            comment = Comment.objects.create(user=request.user, post=post, content=content)
-            return JsonResponse({
-                'success': True,
-                'username': request.user.username,
-                'comment': comment.content,
-                'created_at': comment.created_at.strftime("%B %d, %Y %H:%M"),
-                'comment_id': comment.id
-            })
-    return JsonResponse({'success': False})
-
-# ✅ Delete Post
-@login_required
-def delete_post(request, post_id):
-    post = get_object_or_404(Post, id=post_id)
-
-    if post.user == request.user:
-        post.delete()
-
-    return redirect('feed')
-
-# ✅ Delete Comment
-@login_required
-def delete_comment(request, comment_id):
-    comment = get_object_or_404(Comment, id=comment_id)
-
-    if comment.user == request.user or comment.post.user == request.user:
-        comment.delete()
-
-    return redirect('feed')
-
-# ✅ View All Conversations (Latest Message Per User)
+# ✅ Private Messaging Views
 @login_required
 def message_list(request):
-    latest_messages = Message.objects.filter(
-        receiver=request.user
-    ).values('sender').annotate(latest_message=Max('created_at')).order_by('-latest_message')
+    """Displays the user's inbox with messages."""
+    messages = Message.objects.filter(receiver=request.user)
+    return render(request, 'messages/inbox.html', {'messages': messages})
 
-    conversations = []
-    for msg in latest_messages:
-        latest_msg = Message.objects.filter(sender_id=msg['sender'], created_at=msg['latest_message']).first()
-        conversations.append(latest_msg)
-
-    return render(request, 'messages/inbox.html', {'messages': conversations})
-
-# ✅ Send Message
 @login_required
-def send_message(request, receiver_id):
-    receiver = get_object_or_404(get_user_model(), id=receiver_id)
-
+def send_message(request):
+    """Allows users to send messages to each other."""
     if request.method == "POST":
-        content = request.POST.get('content')
-        if content.strip():
-            Message.objects.create(sender=request.user, receiver=receiver, content=content)
-            return redirect('message_list')
+        recipient_username = request.POST.get("recipient")
+        content = request.POST.get("content")
+        recipient = get_object_or_404(CustomUser, username=recipient_username)
+        Message.objects.create(sender=request.user, receiver=recipient, content=content)
+    return redirect('message_list')
 
-    return render(request, 'messages/send_message.html', {'receiver': receiver})
-
-# ✅ View Message Thread (Conversation)
 @login_required
 def message_thread(request, receiver_id):
-    receiver = get_object_or_404(get_user_model(), id=receiver_id)
-    
+    """Displays a conversation between two users."""
+    other_user = get_object_or_404(CustomUser, id=receiver_id)
     messages = Message.objects.filter(
-        sender=request.user, receiver=receiver
-    ) | Message.objects.filter(
-        sender=receiver, receiver=request.user
-    )
-    
-    messages = messages.order_by('created_at')
+        (Q(sender=request.user, receiver=other_user) | Q(sender=other_user, receiver=request.user))
+    ).order_by("created_at")
+    return render(request, 'messages/thread.html', {'messages': messages, 'other_user': other_user})
 
-    # ✅ Mark received messages as read
-    unread_messages = messages.filter(receiver=request.user, is_read=False)
-    unread_messages.update(is_read=True)
 
-    return render(request, 'messages/message_thread.html', {'messages': messages, 'receiver': receiver})
+
+
+
+
+
+
+
+
+
+
+
 
 
 

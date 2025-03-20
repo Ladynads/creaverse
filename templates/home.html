@@ -1,6 +1,6 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
 
 {% block content %}
-    <h1>Welcome to CreatorVerse!</h1>
-    <p>This is the homepage.</p>
+<h1>Welcome to CreatorVerse</h1>
+<p>This is the homepage. Click <a href="{% url 'feed' %}">here</a> to visit the feed.</p>
 {% endblock %}

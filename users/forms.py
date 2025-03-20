@@ -1,16 +1,17 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
-from .models import CustomUser
+from .models import CustomUser, InviteCode
 
 class CustomUserCreationForm(UserCreationForm):
-    invite_code = forms.CharField(max_length=10, required=False, help_text="Enter your invite code (optional).")
+    invite_code = forms.CharField(max_length=10, required=True, help_text="Enter a valid invite code to join.")
 
     class Meta:
         model = CustomUser
-        fields = ['username', 'email', 'bio', 'profile_image', 'invite_code']
+        fields = ["username", "email", "password1", "password2", "invite_code"]
 
     def clean_invite_code(self):
-        code = self.cleaned_data.get('invite_code')
-        if code and not CustomUser.objects.filter(invite_code=code).exists():
-            raise forms.ValidationError("Invalid invite code.")
-        return code
+        invite_code = self.cleaned_data.get("invite_code")
+        if not InviteCode.objects.filter(code=invite_code, used_by__isnull=True).exists():
+            raise forms.ValidationError("This invite code is invalid or has already been used.")
+        return invite_code
+

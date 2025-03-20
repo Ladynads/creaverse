@@ -9,13 +9,21 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
-from creaverse.views import home  # Import the home view
+from users.views import home_view
 
 urlpatterns = [
+    # ✅ Home Route
+    path('', home_view, name='home'),
+    
+    # ✅ Admin Panel
     path('admin/', admin.site.urls),
-    path('', home, name='home'),  # Home page
-    path('users/', include('users.urls')),  # User-related URLs
-    path('messages/', include('users.urls')),  # Messaging system under /messages/
+
+    # ✅ Include Users & Authentication URLs
+    path('feed/', include('feed.urls')),
+    path('users/', include('users.urls')),
+
+    # ✅ Home Route (Redirect to Feed)
+    path('feed/', include('feed.urls')),
 ]
 
 # ✅ Serve media files during development
@@ -27,4 +35,3 @@ if settings.DEBUG:
     urlpatterns += [
         path('__debug__/', include(debug_toolbar.urls)),  
     ]
-

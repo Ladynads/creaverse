@@ -14,6 +14,10 @@ from pathlib import Path
 import dj_database_url  
 import os
 import sys
+from dotenv import load_dotenv  # ✅ Load dotenv
+
+# ✅ Load environment variables from .env file
+load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -24,23 +28,23 @@ sys.path.append(str(BASE_DIR))
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
+# ✅ SECRET KEY (Loaded from .env)
 SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'change-this-for-local-dev-only')
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True  # Change to False in production
+# ✅ DEBUG (Loaded from .env, defaulting to True for local development)
+DEBUG = os.getenv('DEBUG', 'True') == 'True'
 
-# Ensure the app is only served over HTTPS in production
-if not DEBUG:  
+# ✅ ALLOWED HOSTS (Loaded from .env)
+ALLOWED_HOSTS = os.getenv('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
+
+# ✅ Ensure HTTPS in Production
+if not DEBUG:
     SECURE_HSTS_SECONDS = 31536000  # 1 year
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
     SECURE_SSL_REDIRECT = True  # Redirect all HTTP requests to HTTPS
 
-ALLOWED_HOSTS = os.getenv('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1,creaverse-813bebe0de8e.herokuapp.com').split(',')
-
 # Application definition
-
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -51,7 +55,7 @@ INSTALLED_APPS = [
     'whitenoise.runserver_nostatic',
     'creaverse',
     'users',
-
+    'feed',
 ]
 
 if DEBUG:
@@ -81,7 +85,7 @@ TEMPLATES = [
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
         'DIRS': [
             BASE_DIR / 'templates',  
-            BASE_DIR / 'users' / 'templates',  
+            BASE_DIR / 'users' / 'feed' / 'templates',  
         ], 
         'APP_DIRS': True,
         'OPTIONS': {
@@ -97,9 +101,11 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'creaverse.wsgi.application'
 
-# Database
 DATABASES = {
-    'default': dj_database_url.config(default='sqlite:///db.sqlite3')  
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / "db.sqlite3",
+    }
 }
 
 # Password validation
@@ -116,13 +122,12 @@ TIME_ZONE = 'UTC'
 USE_I18N = True
 USE_TZ = True
 
-# Static files (CSS, JavaScript, Images)
+# ✅ Static & Media Files (For Production & Development)
 STATIC_URL = 'static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles' 
 STATICFILES_DIRS = [BASE_DIR / 'static']
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'  
 
-# Media files (User-uploaded content)
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
@@ -130,8 +135,8 @@ MEDIA_ROOT = BASE_DIR / 'media'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Security settings
-SESSION_COOKIE_SECURE = True  
-CSRF_COOKIE_SECURE = True  
+SESSION_COOKIE_SECURE = not DEBUG  
+CSRF_COOKIE_SECURE = not DEBUG  
 
 # Authentication Redirects
 LOGIN_REDIRECT_URL = 'home'  
@@ -142,3 +147,15 @@ LOGIN_URL = 'login'
 INTERNAL_IPS = [
     "127.0.0.1",
 ]
+
+# ✅ Email Configuration (Using .env Variables)
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = os.getenv('EMAIL_HOST', 'smtp.gmail.com')  
+EMAIL_PORT = int(os.getenv('EMAIL_PORT', 587))  
+EMAIL_USE_TLS = True  
+
+EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', '')
+EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+
+

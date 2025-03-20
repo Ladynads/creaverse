@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>🎟 Invite Friends to CreatorVerse</h2>
+<p>Generate an invite code to share with a friend!</p>
+
+<!-- ✅ Invite Code Generator -->
+<form id="generate-invite-form">
+    {% csrf_token %}
+    <button type="submit">➕ Generate Invite Code</button>
+</form>
+
+<!-- ✅ Show Existing Codes -->
+<h3>Your Invite Codes</h3>
+<ul id="invite-code-list">
+    {% for invite in invite_codes %}
+        <li id="invite-{{ invite.id }}">
+            <strong id="code-{{ invite.id }}">{{ invite.code }}</strong> 
+            {% if invite.used_by %} (Used by {{ invite.used_by.username }}) {% else %} (Unused) {% endif %}
+
+            <!-- ✅ Copy & Email Buttons (Only if not used) -->
+            {% if not invite.used_by %}
+                <button class="copy-btn" data-code="{{ invite.code }}">📋 Copy</button>
+                <button class="email-btn" data-code="{{ invite.code }}">📧 Send Email</button>
+            {% endif %}
+        </li>
+    {% empty %}
+        <li>You haven't generated any invite codes yet.</li>
+    {% endfor %}
+</ul>
+
+<!-- ✅ JavaScript for AJAX Generation, Copy & Email -->
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const generateForm = document.getElementById("generate-invite-form");
+    const inviteList = document.getElementById("invite-code-list");
+
+    // ✅ Fetch CSRF Token from Cookies (Fixes AJAX CSRF issue)
+    function getCSRFToken() {
+        let cookieValue = null;
+        const cookies = document.cookie.split(";");
+        for (let i = 0; i < cookies.length; i++) {
+            let cookie = cookies[i].trim();
+            if (cookie.startsWith("csrftoken=")) {
+                cookieValue = decodeURIComponent(cookie.substring("csrftoken=".length));
+                break;
+            }
+        }
+        return cookieValue;
+    }
+
+    // ✅ AJAX Invite Code Generation
+    generateForm.addEventListener("submit", function(event) {
+        event.preventDefault();
+
+        fetch("{% url 'generate_invite' %}", {
+            method: "POST",
+            headers: {
+                "X-CSRFToken": getCSRFToken(),
+                "Content-Type": "application/json"
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                let newItem = document.createElement("li");
+                newItem.id = "invite-" + data.code;
+                newItem.innerHTML = `
+                    <strong id="code-${data.code}">${data.code}</strong> (Unused)
+                    <button class="copy-btn" data-code="${data.code}">📋 Copy</button>
+                    <button class="email-btn" data-code="${data.code}">📧 Send Email</button>
+                `;
+                inviteList.appendChild(newItem);
+                attachEventListeners(newItem); // ✅ Attach event listeners
+            } else {
+                alert("⚠️ " + data.error);
+            }
+        })
+        .catch(error => console.error("Error generating invite:", error));
+    });
+
+    // ✅ Attach Event Listeners to Copy & Email Buttons
+    function attachEventListeners(element) {
+        const copyButton = element.querySelector(".copy-btn");
+        if (copyButton) {
+            copyButton.addEventListener("click", function() {
+                const code = this.dataset.code;
+                navigator.clipboard.writeText(code)
+                .then(() => {
+                    copyButton.textContent = "✅ Copied!";
+                    setTimeout(() => copyButton.textContent = "📋 Copy", 1500);
+                })
+                .catch(err => console.error("Copy failed:", err));
+            });
+        }
+
+        // ✅ Send Invite via Email
+        const emailButton = element.querySelector(".email-btn");
+        if (emailButton) {
+            emailButton.addEventListener("click", function() {
+                const code = this.dataset.code;
+                const email = prompt("📧 Enter the recipient's email:");
+                if (email) {
+                    fetch("{% url 'send_invite_email' %}", {
+                        method: "POST",
+                        headers: {
+                            "X-CSRFToken": getCSRFToken(),
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify({ email: email, code: code })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            alert("✅ Invite sent successfully to " + email);
+                        } else {
+                            alert("⚠️ Error: " + data.message);
+                        }
+                    })
+                    .catch(error => console.error("Error sending invite:", error));
+                }
+            });
+        }
+    }
+
+    // ✅ Attach to Existing Invite Codes on Page Load
+    document.querySelectorAll("#invite-code-list li").forEach(attachEventListeners);
+});
+</script>
+
+{% endblock %}
+
+
