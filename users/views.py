@@ -29,7 +29,7 @@ def register(request):
                 return render(request, 'users/register.html', {'form': form, 'error': "Invalid or used invite code!"})
 
             user = form.save()
-            invite.mark_used(user)  # ✅ Mark invite as used
+            invite.mark_used(user)  
             login(request, user)
             return redirect('feed')
 
@@ -87,12 +87,13 @@ def user_profile(request, username):
         'profile_user': profile_user,
     })
 
-# Invite View
 @login_required
 def invite_view(request):
     """Render the invite page with user's invite codes."""
+    print("🔍 DEBUG: invite_view() was called")  # ✅ This will show in the terminal
     invite_codes = InviteCode.objects.filter(created_by=request.user)
     return render(request, "users/invite.html", {"invite_codes": invite_codes})
+
 
 # ✅ Send Invite Email
 @login_required
