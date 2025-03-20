@@ -2,29 +2,89 @@
 {% load static %}
 
 {% block content %}
-<h2>👤 {{ profile_user.username }}'s Profile</h2>
+<div class="profile-container">
+    <!-- Profile Header -->
+    <div class="profile-header">
+        <h2>👤 {{ profile_user.username }}'s Profile</h2>
+        {% if profile_user.profile_image %}
+            <img src="{{ profile_user.profile_image.url }}" alt="Profile Image" class="profile-img">
+        {% else %}
+            <img src="{% static 'profile_pics/default_profile.webp' %}" alt="Default Profile Image" class="profile-img">
+        {% endif %}
+    </div>
 
-{% if user.profile_image %}
-    <img src="{{ user.profile_image.url }}" alt="Profile Image" width="100">
-{% else %}
-    <img src="{% static 'profile_pics/default_profile.webp' %}" alt="Default Profile Image" width="100">
-{% endif %}
+    <!-- User Bio & Info -->
+    <div class="profile-info">
+        <p><strong>Bio:</strong> {{ profile_user.bio|default_if_none:"No bio yet." }}</p>
+        <p><strong>Email:</strong> {{ profile_user.email }}</p>
+        <a href="{% url 'profile_edit' %}" class="btn btn-primary">✏ Edit Profile</a>
+    </div>
 
+    <!-- Create Post Button -->
+    {% if profile_user == user %}
+        <a href="{% url 'feed' %}" class="btn btn-success">➕ Create a New Post</a>
+    {% endif %}
 
-<p><strong>Bio:</strong> {{ user.bio|default_if_none:"No bio yet." }}</p>
-<p><strong>Email:</strong> {{ profile_user.email }}</p>
+    <!-- User Posts -->
+    <h3>Your Posts:</h3>
+    <div class="post-list">
+        {% for post in user_posts %}
+            <div class="post-card">
+                <p><strong>{{ post.created_at|date:"F j, Y, g:i a" }}</strong></p>
+                <p>{{ post.content }}</p>
+                <p>❤️ {{ post.likes.count }} Likes | 💬 {{ post.comments.count }} Comments</p>
+                <a href="{% url 'post_detail' post.id %}" class="btn btn-sm btn-outline-primary">View Post</a>
+            </div>
+        {% empty %}
+            <p>No posts yet.</p>
+        {% endfor %}
+    </div>
+</div>
 
-<a href="{% url 'profile_edit' %}">✏ Edit Profile</a>
+<!-- ✅ Profile Styling -->
+<style>
+    .profile-container {
+        max-width: 600px;
+        margin: auto;
+        padding: 20px;
+        text-align: center;
+    }
+    .profile-header {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+    .profile-img {
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        object-fit: cover;
+        margin-top: 10px;
+    }
+    .profile-info {
+        background: #f9f9f9;
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 15px;
+    }
+    .post-list {
+        margin-top: 20px;
+    }
+    .post-card {
+        background: white;
+        padding: 15px;
+        margin-bottom: 10px;
+        border-radius: 8px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
+    .post-card p {
+        margin: 5px 0;
+    }
+</style>
 
-<h3>Your Posts:</h3>
-<ul>
-    {% for post in profile_user.posts.all %}
-        <li>{{ post.content }} - {{ post.created_at|date:"F j, Y" }}</li>
-    {% empty %}
-        <p>No posts yet.</p>
-    {% endfor %}
-</ul>
 {% endblock %}
+
 
 
 

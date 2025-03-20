@@ -7,7 +7,7 @@
   
   <div>
     <h4>Comments</h4>
-    {% for comment in comments %}
+    {% for comment in post.comments.all|dictsort:"created_at" %}
       <div>
         <p><strong>{{ comment.user.username }}:</strong> {{ comment.content }}</p>
       </div>

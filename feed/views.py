@@ -1,39 +1,62 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
-from django.db.models import Count, F, ExpressionWrapper, FloatField, Q
+from django.db.models import Count, Q, F, Value, IntegerField, Case, When
 from django.utils.timezone import now
 import datetime
-from users.models import Post, Comment 
+from feed.models import Post
+from users.models import Comment  
+
 
 # ✅ AI-Powered Feed View
 @login_required
 def feed_view(request):
-    """Fetches posts using AI-powered recommendations and trending posts."""
-    time_threshold = now() - datetime.timedelta(days=7)
+    """Fetches posts with AI-powered recommendations, trending posts, and latest posts."""
 
+    # ✅ Fetch user interactions (posts they liked or commented on)
     user_interactions = Post.objects.filter(
         Q(likes=request.user) | Q(comments__user=request.user)
     ).distinct()
 
+    # ✅ Extract keywords from interacted posts
     interacted_keywords = set()
     for post in user_interactions:
-        if post.keywords:
+        if hasattr(post, 'keywords') and post.keywords:  # Ensure 'keywords' exists
             interacted_keywords.update(post.keywords.split(', '))
 
+    # ✅ Convert set to list for filtering
+    interacted_keywords = list(interacted_keywords)
+
+    # ✅ Get posts matching those keywords (excluding the user's own posts)
     recommended_posts = Post.objects.filter(
         Q(keywords__in=interacted_keywords)
-    ).exclude(user=request.user).distinct()
+    ).exclude(user=request.user).distinct() if interacted_keywords else Post.objects.none()
 
+    # ✅ Add ranking based on likes & comments
     trending_posts = Post.objects.annotate(
         num_likes=Count('likes'),
         num_comments=Count('comments'),
-    ).order_by('-num_likes', '-num_comments', '-created_at')
+        relevance_score=F('num_likes') * 2 + F('num_comments')  # Weighted ranking
+    ).order_by('-relevance_score', '-created_at')
 
-    latest_posts = Post.objects.order_by('-created_at')
+    # ✅ Get latest posts but make sure they are not too old
+    time_threshold = now() - datetime.timedelta(days=7)
+    latest_posts = Post.objects.filter(created_at__gte=time_threshold).order_by('-created_at')
 
-    all_posts = list(recommended_posts) + list(trending_posts) + list(latest_posts)
+    # ✅ Personalization: Boost posts that user has interacted with
+    personalized_posts = Post.objects.annotate(
+        interacted=Case(
+            When(likes=request.user, then=Value(1)),
+            When(comments__user=request.user, then=Value(1)),
+            default=Value(0),
+            output_field=IntegerField(),
+        )
+    ).order_by('-interacted', '-created_at')
 
+    # ✅ Combine: Prioritize recommended -> personalized -> trending -> latest
+    all_posts = list(recommended_posts) + list(personalized_posts) + list(trending_posts) + list(latest_posts)
+
+    # ✅ Remove duplicate posts
     seen = set()
     unique_posts = []
     for post in all_posts:
@@ -60,7 +83,7 @@ def create_post(request):
 def post_detail_view(request, post_id):
     """Displays the details of a single post along with comments."""
     post = get_object_or_404(Post, id=post_id)
-    comments = post.comments.all()
+    comments = post.comments.all().order_by('created_at')
     return render(request, 'feed/post_detail.html', {'post': post, 'comments': comments})
 
 
@@ -106,3 +129,4 @@ def delete_comment(request, comment_id):
     if comment.user == request.user or comment.post.user == request.user:
         comment.delete()
     return redirect('post_detail', post_id=comment.post.id)
+

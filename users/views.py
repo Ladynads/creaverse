@@ -9,6 +9,7 @@ from django.core.mail import send_mail
 from django.conf import settings
 from .forms import CustomUserCreationForm
 from .models import CustomUser, InviteCode, Message
+from feed.models import Post
 
 # ✅ User model
 from django.contrib.auth import get_user_model
@@ -60,7 +61,14 @@ class CustomLogoutView(LogoutView):
 # ✅ View Own Profile
 @login_required
 def profile_view(request):
-    return render(request, 'users/profile.html', {'user': request.user})
+    """Displays the logged-in user's profile & posts."""
+    user_posts = Post.objects.filter(user=request.user).order_by('-created_at')  # ✅ Fetch user's posts
+    return render(request, 'users/profile.html', {
+        'profile_user': request.user,
+        'user_posts': user_posts,
+    })
+
+
 
 
 # ✅ Edit Profile

@@ -1,15 +1,15 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from .models import CustomUser, InviteCode, Post, Comment, Message, UserInteraction
+from .models import CustomUser, InviteCode, Comment, Message, UserInteraction
 
 # ✅ Register Custom User Model
 class CustomUserAdmin(UserAdmin):
-    list_display = ('username', 'email', 'bio', 'profile_image') 
+    list_display = ('username', 'email', 'bio', 'profile_image')
     fieldsets = UserAdmin.fieldsets + (
-        ("Profile Info", {"fields": ("bio", "profile_image")}),  
+        ("Profile Info", {"fields": ("bio", "profile_image")}),
     )
     add_fieldsets = UserAdmin.add_fieldsets + (
-        ("Profile Info", {"fields": ("bio", "profile_image")}),  
+        ("Profile Info", {"fields": ("bio", "profile_image")}),
     )
 
 
@@ -18,13 +18,6 @@ class InviteCodeAdmin(admin.ModelAdmin):
     list_display = ("code", "created_by", "used_by", "created_at", "used_at")
     search_fields = ("code", "created_by__username", "used_by__username")
     list_filter = ("created_at", "used_at")
-
-
-# ✅ Register Post Model
-class PostAdmin(admin.ModelAdmin):
-    list_display = ("user", "content", "created_at")
-    search_fields = ("content", "user__username")
-    list_filter = ("created_at",)
 
 
 # ✅ Register Comment Model
@@ -50,8 +43,6 @@ class UserInteractionAdmin(admin.ModelAdmin):
 # ✅ Add to Django Admin
 admin.site.register(CustomUser, CustomUserAdmin)
 admin.site.register(InviteCode, InviteCodeAdmin)
-admin.site.register(Post, PostAdmin)
 admin.site.register(Comment, CommentAdmin)
 admin.site.register(Message, MessageAdmin)
 admin.site.register(UserInteraction, UserInteractionAdmin)
-

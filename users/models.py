@@ -9,7 +9,7 @@ import nltk
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
 
-# ✅ Manually download required NLTK data files instead of doing it here
+# ✅ Manually download required NLTK data files
 # Run in terminal: `python -c "import nltk; nltk.download('stopwords'); nltk.download('punkt')"`
 
 # ✅ Function to generate unique invite codes
@@ -17,11 +17,12 @@ def generate_invite_code():
     return ''.join(random.choices(string.ascii_uppercase + string.digits, k=8))
 
 
-# ✅ Custom User Model (Invite System Added)
+# ✅ Custom User Model (Includes Invite System)
 class CustomUser(AbstractUser):
+    """Extends Django's AbstractUser with additional fields."""
     bio = models.TextField(blank=True, null=True)
     profile_image = models.ImageField(upload_to="profile_pics/", blank=True, null=True)
-    used_invite = models.BooleanField(default=False)
+    used_invite = models.BooleanField(default=False)  # Tracks if user registered with an invite
 
     def __str__(self):
         return self.username
@@ -35,6 +36,7 @@ class CustomUser(AbstractUser):
 
 # ✅ Invite Code Model (For Invite-Only Registration)
 class InviteCode(models.Model):
+    """Model to manage invite codes for user registration."""
     code = models.CharField(max_length=10, unique=True, default=generate_invite_code)
     created_by = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name="generated_invites")
     used_by = models.OneToOneField(CustomUser, on_delete=models.SET_NULL, null=True, blank=True, related_name="invite_used_by")
@@ -51,45 +53,11 @@ class InviteCode(models.Model):
         return f"Invite {self.code} - {'Used' if self.used_by else 'Unused'}"
 
 
-# ✅ AI-Enhanced Post Model
-class Post(models.Model):
-    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name="posts")
-    content = models.TextField()
-    created_at = models.DateTimeField(auto_now_add=True)
-    likes = models.ManyToManyField(CustomUser, related_name="liked_posts", blank=True)
-    
-    # ✅ AI Keyword Extraction
-    keywords = models.TextField(blank=True, null=True)
-
-    class Meta:
-        ordering = ["-created_at"]
-
-    def total_likes(self):
-        return self.likes.count()
-
-    def extract_keywords(self):
-        """Extracts keywords using NLP, removing stopwords."""
-        try:
-            stop_words = set(stopwords.words("english"))
-            words = word_tokenize(self.content.lower())  # Tokenize text
-            filtered_words = [w for w in words if w.isalnum() and w not in stop_words]  # Remove stop words
-            return ", ".join(filtered_words[:10])  # Store top 10 keywords
-        except Exception as e:
-            return ""  # Return empty string if NLTK data is missing
-
-    def save(self, *args, **kwargs):
-        """Extract and store keywords before saving the post."""
-        self.keywords = self.extract_keywords()
-        super().save(*args, **kwargs)
-
-    def __str__(self):
-        return f"{self.user.username}: {self.content[:30]}"
-
-
 # ✅ Comment Model (For Posts)
 class Comment(models.Model):
+    """Comments on posts, linked to user & post."""
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name="comments")
-    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name="comments")
+    post = models.ForeignKey("feed.Post", on_delete=models.CASCADE, related_name="comments")  # ✅ String reference to avoid circular import
     content = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -102,6 +70,7 @@ class Comment(models.Model):
 
 # ✅ Private Message Model (DMs)
 class Message(models.Model):
+    """Direct messages between users."""
     sender = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name="sent_messages")
     receiver = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name="received_messages")
     content = models.TextField()
@@ -117,8 +86,9 @@ class Message(models.Model):
 
 # ✅ User Interaction Model (Tracks User Engagement)
 class UserInteraction(models.Model):
+    """Tracks user engagement with posts (likes, comments, views)."""
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name="user_interactions")
-    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name="post_interactions")
+    post = models.ForeignKey("feed.Post", on_delete=models.CASCADE, related_name="post_interactions")  # ✅ String reference
     liked = models.BooleanField(default=False)
     commented = models.BooleanField(default=False)
     viewed = models.BooleanField(default=False)
@@ -126,3 +96,4 @@ class UserInteraction(models.Model):
 
     def __str__(self):
         return f"{self.user.username} - {self.post.id} ({'Liked' if self.liked else ''} {'Commented' if self.commented else ''})"
+
