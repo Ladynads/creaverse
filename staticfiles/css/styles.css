@@ -1,0 +1,66 @@
+/* Home Page Styling */
+.homepage-container {
+    text-align: center;
+    padding: 50px 20px;
+    color: #ffffff;
+    font-family: 'Poppins', sans-serif;
+}
+
+.highlight {
+    color: #b400fc;
+    font-weight: bold;
+}
+
+.tagline {
+    font-size: 1.5rem;
+    font-style: italic;
+    margin-bottom: 20px;
+    color: #e0e1dd;
+}
+
+.homepage-content {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 20px;
+    border-radius: 10px;
+    backdrop-filter: blur(10px);
+    display: inline-block;
+    max-width: 600px;
+    margin-top: 20px;
+}
+
+.cta-text {
+    font-size: 1.2rem;
+    margin-top: 10px;
+}
+
+.btn-primary, .btn-secondary {
+    display: inline-block;
+    padding: 12px 20px;
+    margin: 10px;
+    font-size: 18px;
+    font-weight: bold;
+    text-decoration: none;
+    border-radius: 25px;
+    transition: all 0.3s ease;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #6a00f4, #b400fc);
+    color: white;
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, #b400fc, #6a00f4);
+    transform: scale(1.05);
+}
+
+.btn-secondary {
+    background: transparent;
+    color: #ffffff;
+    border: 2px solid #b400fc;
+}
+
+.btn-secondary:hover {
+    background: #b400fc;
+    color: white;
+}
