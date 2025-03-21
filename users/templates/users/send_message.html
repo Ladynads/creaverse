@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="message-container">
+    <h2>Send a Message to {{ recipient.username }}</h2>
+    
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit" class="btn-primary">Send Message</button>
+    </form>
+
+    <a href="{% url 'message_list' %}" class="btn-secondary">Back to Messages</a>
+</div>
+{% endblock %}

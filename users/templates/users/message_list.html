@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="messages-container">
+    <h2>📩 Your Conversations</h2>
+
+    <!-- ✅ Display Success Messages -->
+    {% if messages %}
+        <ul class="success-messages">
+            {% for message in messages %}
+                <li class="success">{{ message }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+
+    <!-- ✅ Received Messages -->
+    <h3>Messages You've Received</h3>
+    {% if received_messages %}
+        <ul class="received-messages">
+            {% for msg in received_messages %}
+                <li>
+                    <strong>From {{ msg.sender.username }}:</strong> {{ msg.content }}
+                    <small>({{ msg.timestamp|date:"F j, Y, g:i a" }})</small>
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>No new messages.</p>
+    {% endif %}
+
+    <!-- ✅ Sent Messages -->
+    <h3>Messages You've Sent</h3>
+    {% if sent_messages %}
+        <ul class="sent-messages">
+            {% for msg in sent_messages %}
+                <li>
+                    <strong>To {{ msg.receiver.username }}:</strong> {{ msg.content }}
+                    <small>({{ msg.timestamp|date:"F j, Y, g:i a" }})</small>
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>No messages sent yet.</p>
+    {% endif %}
+</div>
+{% endblock %}
+

@@ -3,11 +3,12 @@ from django.contrib.auth import login, logout
 from django.contrib.auth.views import LoginView, LogoutView
 from django.urls import reverse_lazy
 from django.contrib.auth.decorators import login_required
+from django.contrib import messages
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.core.mail import send_mail
 from django.conf import settings
-from .forms import CustomUserCreationForm
+from .forms import CustomUserCreationForm, MessageForm
 from .models import CustomUser, InviteCode, Message
 from feed.models import Post
 
@@ -41,7 +42,11 @@ def register(request):
 
 # ✅ Home View
 def home_view(request):
-    return render(request, 'home.html')
+    unread_count = 0  # Default unread count
+    if request.user.is_authenticated:
+        unread_count = Message.objects.filter(receiver=request.user, is_read=False).count()
+    
+    return render(request, "home.html", {"unread_count": unread_count})
 
 
 # ✅ Login View
@@ -67,8 +72,6 @@ def profile_view(request):
         'profile_user': request.user,
         'user_posts': user_posts,
     })
-
-
 
 
 # ✅ Edit Profile
@@ -143,31 +146,86 @@ def generate_invite(request):
 # ✅ Private Messaging Views
 @login_required
 def message_list(request):
-    """Displays the user's inbox with messages."""
-    messages = Message.objects.filter(receiver=request.user)
-    return render(request, 'messages/inbox.html', {'messages': messages})
+    messages_received = Message.objects.filter(receiver=request.user).order_by("-created_at")
+    messages_sent = Message.objects.filter(sender=request.user).order_by("-created_at")  # ✅ Show sent messages
+
+    return render(
+        request,
+        "users/message_list.html",
+        {"messages_received": messages_received, "messages_sent": messages_sent},
+    )
+
 
 @login_required
-def send_message(request):
-    """Allows users to send messages to each other."""
+def send_message(request, user_id):
+    receiver = get_object_or_404(CustomUser, id=user_id) 
+
     if request.method == "POST":
-        recipient_username = request.POST.get("recipient")
-        content = request.POST.get("content")
-        recipient = get_object_or_404(CustomUser, username=recipient_username)
-        Message.objects.create(sender=request.user, receiver=recipient, content=content)
-    return redirect('message_list')
+        form = MessageForm(request.POST)
+        if form.is_valid():
+            message = form.save(commit=False)
+            message.sender = request.user
+            message.receiver = receiver
+            message.save()
+            
+            # ✅ Show success message
+            messages.success(request, f"Message sent to {receiver.username} successfully!")
+            
+            # ✅ Redirect back to message list
+            return redirect("message_list") 
+    else:
+        form = MessageForm()
+
+    return render(request, "users/send_message.html", {"form": form, "receiver": receiver})
 
 @login_required
 def message_thread(request, receiver_id):
-    """Displays a conversation between two users."""
-    other_user = get_object_or_404(CustomUser, id=receiver_id)
-    messages = Message.objects.filter(
-        (Q(sender=request.user, receiver=other_user) | Q(sender=other_user, receiver=request.user))
-    ).order_by("created_at")
-    return render(request, 'messages/thread.html', {'messages': messages, 'other_user': other_user})
+    receiver = get_object_or_404(CustomUser, id=receiver_id)
+    messages_between = Message.objects.filter(
+        sender=request.user, receiver=receiver
+    ) | Message.objects.filter(sender=receiver, receiver=request.user)
+
+    messages_between = messages_between.order_by("created_at")  # ✅ Oldest first
+
+    if request.method == "POST":
+        form = MessageForm(request.POST)
+        if form.is_valid():
+            message = form.save(commit=False)
+            message.sender = request.user
+            message.receiver = receiver
+            message.save()
+            messages.success(request, "Reply sent successfully!")
+            return redirect("message_thread", receiver_id=receiver.id)
+    else:
+        form = MessageForm()
+
+    return render(
+        request,
+        "users/message_thread.html",
+        {"messages_between": messages_between, "receiver": receiver, "form": form},
+    )
 
 
+@login_required
+def delete_message(request, message_id):
+    message = get_object_or_404(Message, id=message_id)
 
+    # Only allow sender or receiver to delete
+    if request.user == message.sender or request.user == message.receiver:
+        message.delete()
+    
+    return redirect("message_list")  # Redirect back to messages
+
+@login_required
+def message_list(request):
+    """View to show received and sent messages"""
+    received_messages = Message.objects.filter(receiver=request.user).order_by('-created_at') 
+    sent_messages = Message.objects.filter(sender=request.user).order_by('-created_at')  
+
+    return render(request, "users/message_list.html", {
+        "received_messages": received_messages,
+        "sent_messages": sent_messages
+    })
 
 
 
