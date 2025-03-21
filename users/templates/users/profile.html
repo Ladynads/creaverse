@@ -2,10 +2,10 @@
 {% load static %}
 
 {% block content %}
-<div class="profile-container">
+<div class="profile-container cosmic-section">
     <!-- Profile Header -->
     <div class="profile-header">
-        <h2>👤 {{ profile_user.username }}'s Profile</h2>
+        <h2 class="page-title glow-text">👤 {{ profile_user.username }}'s Profile</h2>
         {% if profile_user.profile_image %}
             <img src="{{ profile_user.profile_image.url }}" alt="Profile Image" class="profile-img">
         {% else %}
@@ -41,49 +41,8 @@
     </div>
 </div>
 
-<!-- ✅ Profile Styling -->
-<style>
-    .profile-container {
-        max-width: 600px;
-        margin: auto;
-        padding: 20px;
-        text-align: center;
-    }
-    .profile-header {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        margin-bottom: 20px;
-    }
-    .profile-img {
-        width: 120px;
-        height: 120px;
-        border-radius: 50%;
-        object-fit: cover;
-        margin-top: 10px;
-    }
-    .profile-info {
-        background: #f9f9f9;
-        padding: 15px;
-        border-radius: 8px;
-        margin-bottom: 15px;
-    }
-    .post-list {
-        margin-top: 20px;
-    }
-    .post-card {
-        background: white;
-        padding: 15px;
-        margin-bottom: 10px;
-        border-radius: 8px;
-        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-    }
-    .post-card p {
-        margin: 5px 0;
-    }
-</style>
-
 {% endblock %}
+
 
 
 

@@ -8,7 +8,7 @@
     <form method="POST" action="{% url 'new_post' %}">
         {% csrf_token %}
         <textarea name="content" placeholder="Write something amazing..." required></textarea>
-        <button type="submit">➕ Create Post</button>
+        <button type="submit" class="btn-primary">➕ Create Post</button>
     </form>
 {% endif %}
 
@@ -17,13 +17,19 @@
 <!-- ✅ Display Posts -->
 <ul id="feed-posts">
     {% for post in posts %}
-        <li>
-            <strong>
-                <a href="{% url 'user_profile' post.user.username %}">
-                    {{ post.user.username }}
-                </a>
-            </strong> - {{ post.created_at|date:"F j, Y, g:i a" }}
-            <p>{{ post.content }}</p>
+        <li class="post-card">
+            <!-- Post Header with User Profile Image -->
+            <div class="post-header">
+                <img src="{{ post.user.profile_image.url }}" alt="{{ post.user.username }}" class="post-avatar">
+                <strong>
+                    <a href="{% url 'user_profile' post.user.username %}">
+                        {{ post.user.username }}
+                    </a>
+                </strong> - {{ post.created_at|date:"F j, Y, g:i a" }}
+            </div>
+
+            <!-- Post Content -->
+            <p class="post-content">{{ post.content }}</p>
 
             <!-- ✅ Like Button (AJAX) -->
             <button class="like-btn" data-post-id="{{ post.id }}">
@@ -39,7 +45,7 @@
             <h4>💬 Comments:</h4>
             <ul id="comment-list-{{ post.id }}">
                 {% for comment in post.comments.all %}
-                    <li>
+                    <li class="comment-item">
                         <strong>
                             <a href="{% url 'user_profile' comment.user.username %}">
                                 {{ comment.user.username }}
@@ -48,7 +54,7 @@
                         {% if comment.user == user or post.user == user %}
                             <form action="{% url 'delete_comment' comment.id %}" method="POST" style="display:inline;">
                                 {% csrf_token %}
-                                <button type="submit" style="color:red;">❌ Delete</button>
+                                <button type="submit" class="btn-danger">❌ Delete</button>
                             </form>
                         {% endif %}
                     </li>
@@ -62,7 +68,7 @@
                 <form class="comment-form" data-post-id="{{ post.id }}">
                     {% csrf_token %}
                     <input type="text" name="content" placeholder="Write a comment..." required>
-                    <button type="submit">💬 Comment</button>
+                    <button type="submit" class="btn-secondary">💬 Comment</button>
                 </form>
             {% endif %}
 
@@ -70,7 +76,7 @@
             {% if post.user == user %}
                 <form action="{% url 'delete_post' post.id %}" method="POST" style="display:inline;">
                     {% csrf_token %}
-                    <button type="submit" style="color:red;">🗑️ Delete Post</button>
+                    <button type="submit" class="btn-danger">🗑️ Delete Post</button>
                 </form>
             {% endif %}
             
@@ -174,8 +180,8 @@ document.addEventListener("DOMContentLoaded", function () {
         return cookieValue;
     }
 
-    // ✅ Auto-refresh every 10 seconds (Optional)
-    setInterval(refreshFeed, 10000);  // Refresh every 10 seconds
+    // ✅ Auto-refresh every 10 seconds 
+    setInterval(refreshFeed, 10000);  
 
     attachLikeHandlers();  // Attach like event listeners on page load
     attachCommentHandlers();  // Attach comment event listeners on page load
@@ -183,6 +189,7 @@ document.addEventListener("DOMContentLoaded", function () {
 </script>
 
 {% endblock %}
+
 
 
 

@@ -1,22 +1,155 @@
-<!-- post_detail.html -->
 {% extends 'base.html' %}
 
 {% block content %}
-  <h2>{{ post.content }}</h2>
-  <p>Posted by {{ post.user.username }} on {{ post.created_at }}</p>
-  
-  <div>
-    <h4>Comments</h4>
-    {% for comment in post.comments.all|dictsort:"created_at" %}
-      <div>
-        <p><strong>{{ comment.user.username }}:</strong> {{ comment.content }}</p>
-      </div>
-    {% endfor %}
+  <div class="post-detail-container">
+    <h2 class="post-title">{{ post.content }}</h2>
+    <div class="post-header">
+      <img src="{{ post.user.profile_image.url }}" alt="{{ post.user.username }}" class="post-avatar">
+      <p>Posted by <strong>{{ post.user.username }}</strong> on {{ post.created_at|date:"F j, Y, g:i a" }}</p>
+    </div>
+
+    <!-- ✅ Like Button (AJAX) -->
+    <button class="like-btn" data-post-id="{{ post.id }}">
+        {% if user in post.likes.all %}
+            ❤️ Unlike
+        {% else %}
+            🤍 Like
+        {% endif %}
+    </button>
+    <span id="like-count-{{ post.id }}">{{ post.likes.count }}</span> Likes
+
+    <!-- ✅ Comments Section -->
+    <div class="comments-section">
+      <h4>💬 Comments:</h4>
+      <ul id="comment-list-{{ post.id }}">
+        {% for comment in post.comments.all %}
+          <li class="comment-item">
+            <strong>
+              <a href="{% url 'user_profile' comment.user.username %}">{{ comment.user.username }}</a>
+            </strong>: {{ comment.content }}
+            {% if comment.user == user or post.user == user %}
+              <form action="{% url 'delete_comment' comment.id %}" method="POST" style="display:inline;">
+                {% csrf_token %}
+                <button type="submit" class="btn-danger">❌ Delete</button>
+              </form>
+            {% endif %}
+          </li>
+        {% empty %}
+          <li>No comments yet. Be the first to comment!</li>
+        {% endfor %}
+      </ul>
+    </div>
+
+    <!-- ✅ Add Comment Form (AJAX) -->
+    {% if user.is_authenticated %}
+      <form class="comment-form" data-post-id="{{ post.id }}">
+        {% csrf_token %}
+        <input type="text" name="content" placeholder="Write a comment..." required>
+        <button type="submit" class="btn-secondary">💬 Comment</button>
+      </form>
+    {% endif %}
+
+    <!-- ✅ Back to Feed Button -->
+    <a href="{% url 'feed' %}" class="btn-primary">Back to Feed</a>
   </div>
 
-  <form method="POST">
-    {% csrf_token %}
-    <textarea name="content" placeholder="Add a comment"></textarea>
-    <button type="submit">Post Comment</button>
-  </form>
+  <!-- ✅ JavaScript for AJAX Like & Comment System -->
+  <script>
+  document.addEventListener("DOMContentLoaded", function () {
+      // ✅ Function to Refresh Post Detail without Reloading
+      function refreshPostDetail() {
+          fetch("{% url 'post_detail' post.id %}")  // Fetch updated post details from the backend
+          .then(response => response.text())
+          .then(html => {
+              let parser = new DOMParser();
+              let doc = parser.parseFromString(html, "text/html");
+              let newComments = doc.querySelector("ul#comment-list-{{ post.id }}").innerHTML;
+              document.querySelector("ul#comment-list-{{ post.id }}").innerHTML = newComments;  // Replace old comments with new ones
+              attachLikeHandlers();  // Reattach event listeners
+              attachCommentHandlers();
+          })
+          .catch(error => console.error("Error fetching post details:", error));
+      }
+
+      // ✅ AJAX for Likes
+      function attachLikeHandlers() {
+          document.querySelectorAll(".like-btn").forEach(button => {
+              button.addEventListener("click", function () {
+                  let postId = this.dataset.postId;
+                  let url = `{% url 'like_post' 999999 %}`.replace('999999', postId); // ✅ Dynamic URL
+
+                  fetch(url, {
+                      method: "POST",
+                      headers: {
+                          "X-CSRFToken": getCookie("csrftoken"),
+                          "Content-Type": "application/json"
+                      }
+                  })
+                  .then(response => response.json())
+                  .then(data => {
+                      if (data.liked) {
+                          this.innerHTML = "❤️ Unlike";
+                      } else {
+                          this.innerHTML = "🤍 Like";
+                      }
+                      document.querySelector(`#like-count-${postId}`).textContent = data.total_likes;
+                      refreshPostDetail();  // Refresh post details after like
+                  })
+                  .catch(error => console.error("Error:", error));
+              });
+          });
+      }
+
+      // ✅ AJAX for Comments
+      function attachCommentHandlers() {
+          document.querySelectorAll(".comment-form").forEach(form => {
+              form.addEventListener("submit", function (event) {
+                  event.preventDefault();  // ✅ Prevent default form submission
+                  let postId = this.dataset.postId;
+                  let url = `{% url 'add_comment' 999999 %}`.replace('999999', postId);
+                  let formData = new FormData(this);
+                  
+                  fetch(url, {
+                      method: "POST",
+                      headers: { "X-CSRFToken": getCookie("csrftoken") },
+                      body: formData
+                  })
+                  .then(response => response.json())
+                  .then(data => {
+                      if (data.success) {
+                          let commentList = document.querySelector(`#comment-list-${postId}`);
+                          let newComment = document.createElement("li");
+                          newComment.innerHTML = `<strong><a href="/users/${data.username}">${data.username}</a></strong>: ${data.comment}`;
+                          commentList.appendChild(newComment);
+                          this.reset();  // ✅ Clear input after submission
+                          refreshPostDetail();  // Refresh post details after comment
+                      }
+                  })
+                  .catch(error => console.error("Error:", error));
+              });
+          });
+      }
+
+      // ✅ Function to get CSRF token
+      function getCookie(name) {
+          let cookieValue = null;
+          if (document.cookie && document.cookie !== "") {
+              let cookies = document.cookie.split(";");
+              for (let i = 0; i < cookies.length; i++) {
+                  let cookie = cookies[i].trim();
+                  if (cookie.startsWith(name + "=")) {
+                      cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                      break;
+                  }
+              }
+          }
+          return cookieValue;
+      }
+
+      attachLikeHandlers();  // Attach like event listeners on page load
+      attachCommentHandlers();  // Attach comment event listeners on page load
+  });
+  </script>
+
 {% endblock %}
+
