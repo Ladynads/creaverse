@@ -31,11 +31,10 @@
             <!-- ✅ Messages with Notification Badge -->
             <a href="{% url 'message_list' %}">
                 📩 Messages
-                {% if unread_count > 0 %}
+                {% if unread_count and unread_count > 0 %}
                     <span class="badge">{{ unread_count }}</span>  <!-- 🔴 Unread Messages Badge -->
                 {% endif %}
-            </a>
- |
+            </a> |
 
             <form id="logout-form" action="{% url 'logout' %}" method="post" style="display: inline;">
                 {% csrf_token %}
@@ -52,6 +51,7 @@
     <script src="{% static 'js/script.js' %}" defer></script>
 </body>
 </html>
+
 
 
 

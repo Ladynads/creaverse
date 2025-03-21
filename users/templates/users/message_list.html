@@ -3,13 +3,13 @@
 <div class="messages-container">
     <h2>📩 Your Conversations</h2>
 
-    <!-- ✅ Display Success Messages -->
+    <!-- ✅ Display Flash Messages (Success, Error, Warning) -->
     {% if messages %}
-        <ul class="success-messages">
+        <div class="flash-messages">
             {% for message in messages %}
-                <li class="success">{{ message }}</li>
+                <div class="flash-message {{ message.tags }}">{{ message }}</div>
             {% endfor %}
-        </ul>
+        </div>
     {% endif %}
 
     <!-- ✅ Received Messages -->
@@ -17,9 +17,16 @@
     {% if received_messages %}
         <ul class="received-messages">
             {% for msg in received_messages %}
-                <li>
-                    <strong>From {{ msg.sender.username }}:</strong> {{ msg.content }}
-                    <small>({{ msg.timestamp|date:"F j, Y, g:i a" }})</small>
+                <li class="message-card">
+                    <strong>From <a href="{% url 'user_profile' msg.sender.username %}">{{ msg.sender.username }}</a>:</strong> 
+                    <p>{{ msg.content }}</p>
+                    <small>{{ msg.created_at|date:"F j, Y, g:i a" }}</small>
+
+                    <!-- ✅ Reply & Delete Buttons -->
+                    <div class="message-actions">
+                        <a href="{% url 'send_message' msg.sender.id %}" class="btn-secondary">Reply</a>
+                        <a href="{% url 'delete_message' msg.id %}" class="btn-danger">Delete</a>
+                    </div>
                 </li>
             {% endfor %}
         </ul>
@@ -32,9 +39,15 @@
     {% if sent_messages %}
         <ul class="sent-messages">
             {% for msg in sent_messages %}
-                <li>
-                    <strong>To {{ msg.receiver.username }}:</strong> {{ msg.content }}
-                    <small>({{ msg.timestamp|date:"F j, Y, g:i a" }})</small>
+                <li class="message-card">
+                    <strong>To <a href="{% url 'user_profile' msg.receiver.username %}">{{ msg.receiver.username }}</a>:</strong> 
+                    <p>{{ msg.content }}</p>
+                    <small>{{ msg.created_at|date:"F j, Y, g:i a" }}</small>
+
+                    <!-- ✅ Delete Option -->
+                    <div class="message-actions">
+                        <a href="{% url 'delete_message' msg.id %}" class="btn-danger">Delete</a>
+                    </div>
                 </li>
             {% endfor %}
         </ul>
@@ -43,4 +56,5 @@
     {% endif %}
 </div>
 {% endblock %}
+
 

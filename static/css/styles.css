@@ -211,30 +211,114 @@ nav a:hover {
     margin-top: 5px;
 }
 
+/* ✅ Message Thread */
+.message-thread-container {
+    max-width: 600px;
+    margin: 30px auto;
+    background: rgba(20, 20, 20, 0.9);
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0px 0px 10px rgba(151, 67, 244, 0.5);
+}
+
+.messages-thread {
+    max-height: 400px;
+    overflow-y: auto;
+    padding: 15px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    margin-bottom: 20px;
+}
+
+/* ✅ Messages - Sent & Received */
+.message {
+    padding: 10px;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    width: fit-content;
+    max-width: 80%;
+}
+
+.sent {
+    background: linear-gradient(90deg, #19A7CE, #9743F4);
+    color: white;
+    align-self: flex-end;
+    text-align: right;
+    margin-left: auto;
+}
+
+.received {
+    background: rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+    align-self: flex-start;
+}
+
+.timestamp {
+    display: block;
+    font-size: 0.85rem;
+    color: #bbb;
+    margin-top: 5px;
+    text-align: right;
+}
+
+/* ✅ Reply Section */
+.reply-section {
+    margin-top: 20px;
+}
+
+.reply-section form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.no-messages {
+    text-align: center;
+    color: #ccc;
+    padding: 20px;
+}
+
+
 /* ✅ Flash Messages (Pop-up Style) */
 .flash-messages {
     position: fixed;
-    top: 20px;
-    right: 20px;
+    top: 70px; /* Ensures it's BELOW the navbar */
+    left: 50%;
+    transform: translateX(-50%);
     z-index: 1000;
+    max-width: 400px;
+    width: 100%;
+    text-align: center;
 }
 
 .flash-message {
-    background: rgba(151, 67, 244, 0.9);  /* Cosmic purple */
-    color: #fff;
-    padding: 12px 18px;
+    background: linear-gradient(90deg, #19A7CE, #9743F4); /* Cosmic purple gradient */
+    color: #ffffff;
+    padding: 12px 20px;
     border-radius: 8px;
     font-weight: bold;
     box-shadow: 0px 0px 10px rgba(151, 67, 244, 0.5);
-    animation: fadeOut 5s forwards;
+    opacity: 1;
+    animation: fadeOut 5s ease-in-out forwards;
     margin-bottom: 10px;
 }
 
+/* ✅ Hide messages after 5 seconds */
 @keyframes fadeOut {
     0% { opacity: 1; }
     80% { opacity: 1; }
     100% { opacity: 0; display: none; }
 }
+
+/* ✅ REMOVE DEFAULT GREEN BACKGROUND */
+ul.messages {
+    list-style-type: none;
+    padding: 0;
+}
+
+ul.messages li {
+    display: none !important; /* Hides Django's default messages */
+}
+
 
 /* ✅ Forms */
 input, textarea {
