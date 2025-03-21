@@ -13,3 +13,9 @@ document.addEventListener("DOMContentLoaded", function() {
     djangoMessages.forEach(msg => msg.style.display = "none");
 });
 
+// Like Button Animation
+document.querySelectorAll('.like-btn').forEach(button => {
+    button.addEventListener('click', () => {
+        button.classList.toggle('liked');
+    });
+});

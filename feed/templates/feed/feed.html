@@ -1,95 +1,109 @@
 {% extends "base.html" %}
 
 {% block content %}
-<h2>🌟 CreatorVerse Feed</h2>
+<section class="feed-section">
+    <h1 class="feed-title"> CreatorVerse Feed</h1>
 
-<!-- ✅ Create Post Form (Inline) -->
-{% if user.is_authenticated %}
-    <form method="POST" action="{% url 'new_post' %}">
+    <!-- ✅ Create Post Form (Inline) -->
+    {% if user.is_authenticated %}
+    <form method="POST" action="{% url 'new_post' %}" class="create-post-form">
         {% csrf_token %}
         <textarea name="content" placeholder="Write something amazing..." required></textarea>
-        <button type="submit" class="btn-primary">➕ Create Post</button>
+        <button type="submit" class="btn btn-primary">➕ Create Post</button>
     </form>
-{% endif %}
+    {% endif %}
 
-<hr>
-
-<!-- ✅ Display Posts -->
-<ul id="feed-posts">
-    {% for post in posts %}
-        <li class="post-card">
+    <!-- ✅ Display Posts in a Grid -->
+    <div class="feed-grid">
+        {% for post in posts %}
+        <div class="post-card">
             <!-- Post Header with User Profile Image -->
             <div class="post-header">
                 <img src="{{ post.user.profile_image.url }}" alt="{{ post.user.username }}" class="post-avatar">
-                <strong>
-                    <a href="{% url 'user_profile' post.user.username %}">
-                        {{ post.user.username }}
-                    </a>
-                </strong> - {{ post.created_at|date:"F j, Y, g:i a" }}
+                <div class="post-user">
+                    <strong>
+                        <a href="{% url 'user_profile' post.user.username %}" class="username">
+                            {{ post.user.username }}
+                        </a>
+                    </strong>
+                    <span class="post-date">{{ post.created_at|date:"F j, Y, g:i a" }}</span>
+                </div>
             </div>
 
             <!-- Post Content -->
             <p class="post-content">{{ post.content }}</p>
 
             <!-- ✅ Like Button (AJAX) -->
-            <button class="like-btn" data-post-id="{{ post.id }}">
-                {% if user in post.likes.all %}
-                    ❤️ Unlike
-                {% else %}
-                    🤍 Like
-                {% endif %}
-            </button>
-            <span id="like-count-{{ post.id }}">{{ post.likes.count }}</span> Likes
+            <div class="post-actions">
+                <button class="like-btn" data-post-id="{{ post.id }}">
+                    {% if user in post.likes.all %}
+                    ❤️
+                    {% else %}
+                    🤍
+                    {% endif %}
+                    <span id="like-count-{{ post.id }}">{{ post.likes.count }}</span>
+                </button>
 
-            <!-- ✅ Show Comments -->
-            <h4>💬 Comments:</h4>
-            <ul id="comment-list-{{ post.id }}">
-                {% for comment in post.comments.all %}
+                <!-- ✅ Comment Button -->
+                <button class="comment-btn" onclick="toggleComments('{{ post.id }}')">💬 {{ post.comments.count }}</button>
+
+                <!-- ✅ Delete Post Button (Only for Post Owner) -->
+                {% if post.user == user %}
+                <form action="{% url 'delete_post' post.id %}" method="POST" class="delete-form">
+                    {% csrf_token %}
+                    <button type="submit" class="btn-danger">🗑️ Delete</button>
+                </form>
+                {% endif %}
+            </div>
+
+            <!-- ✅ Comments Section -->
+            <div id="comments-{{ post.id }}" class="comments-section" style="display: none;">
+                <h4>💬 Comments:</h4>
+                <ul id="comment-list-{{ post.id }}">
+                    {% for comment in post.comments.all %}
                     <li class="comment-item">
                         <strong>
-                            <a href="{% url 'user_profile' comment.user.username %}">
+                            <a href="{% url 'user_profile' comment.user.username %}" class="username">
                                 {{ comment.user.username }}
                             </a>
                         </strong>: {{ comment.content }}
                         {% if comment.user == user or post.user == user %}
-                            <form action="{% url 'delete_comment' comment.id %}" method="POST" style="display:inline;">
-                                {% csrf_token %}
-                                <button type="submit" class="btn-danger">❌ Delete</button>
-                            </form>
+                        <form action="{% url 'delete_comment' comment.id %}" method="POST" class="delete-form">
+                            {% csrf_token %}
+                            <button type="submit" class="btn-danger">❌ Delete</button>
+                        </form>
                         {% endif %}
                     </li>
-                {% empty %}
+                    {% empty %}
                     <li>No comments yet. Be the first to comment!</li>
-                {% endfor %}
-            </ul>
+                    {% endfor %}
+                </ul>
 
-            <!-- ✅ Add Comment Form (AJAX) -->
-            {% if user.is_authenticated %}
+                <!-- ✅ Add Comment Form (AJAX) -->
+                {% if user.is_authenticated %}
                 <form class="comment-form" data-post-id="{{ post.id }}">
                     {% csrf_token %}
                     <input type="text" name="content" placeholder="Write a comment..." required>
-                    <button type="submit" class="btn-secondary">💬 Comment</button>
+                    <button type="submit" class="btn btn-secondary">💬 Comment</button>
                 </form>
-            {% endif %}
-
-            <!-- ✅ Delete Post Button (Only for Post Owner) -->
-            {% if post.user == user %}
-                <form action="{% url 'delete_post' post.id %}" method="POST" style="display:inline;">
-                    {% csrf_token %}
-                    <button type="submit" class="btn-danger">🗑️ Delete Post</button>
-                </form>
-            {% endif %}
-            
-            <hr>
-        </li>
-    {% empty %}
+                {% endif %}
+            </div>
+        </div>
+        {% empty %}
         <p>No posts yet. Be the first to post!</p>
-    {% endfor %}
-</ul>
+        {% endfor %}
+    </div>
+</section>
 
 <!-- ✅ JavaScript for AJAX Like & Comment System -->
 <script>
 document.addEventListener("DOMContentLoaded", function () {
+    // ✅ Function to Toggle Comments
+    function toggleComments(postId) {
+        const commentsSection = document.getElementById(`comments-${postId}`);
+        commentsSection.style.display = commentsSection.style.display === "none" ? "block" : "none";
+    }
+
     // ✅ Function to Refresh Feed without Reloading
     function refreshFeed() {
         fetch("{% url 'feed' %}")  // Fetch fresh posts from the backend
@@ -97,8 +111,8 @@ document.addEventListener("DOMContentLoaded", function () {
         .then(html => {
             let parser = new DOMParser();
             let doc = parser.parseFromString(html, "text/html");
-            let newPosts = doc.querySelector("ul#feed-posts").innerHTML;  // Get updated posts list
-            document.querySelector("ul#feed-posts").innerHTML = newPosts;  // Replace old posts with new ones
+            let newPosts = doc.querySelector(".feed-grid").innerHTML;  // Get updated posts list
+            document.querySelector(".feed-grid").innerHTML = newPosts;  // Replace old posts with new ones
             attachLikeHandlers();  // Reattach event listeners
             attachCommentHandlers();
         })
@@ -122,11 +136,10 @@ document.addEventListener("DOMContentLoaded", function () {
                 .then(response => response.json())
                 .then(data => {
                     if (data.liked) {
-                        this.innerHTML = "❤️ Unlike";
+                        this.innerHTML = `❤️ <span id="like-count-${postId}">${data.total_likes}</span>`;
                     } else {
-                        this.innerHTML = "🤍 Like";
+                        this.innerHTML = `🤍 <span id="like-count-${postId}">${data.total_likes}</span>`;
                     }
-                    document.querySelector(`#like-count-${postId}`).textContent = data.total_likes;
                     refreshFeed();  // Refresh feed after like
                 })
                 .catch(error => console.error("Error:", error));

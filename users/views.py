@@ -234,7 +234,9 @@ def delete_message(request, message_id):
 
     return redirect(request.META.get("HTTP_REFERER", "message_list"))  # Redirect to previous page
 
-
+def feed_view(request):
+    posts = Post.objects.all().order_by('-created_at')
+    return render(request, 'feed/feed.html', {'posts': posts})
 
 
 
