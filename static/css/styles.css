@@ -4,26 +4,33 @@
     padding: 0;
     box-sizing: border-box;
     font-family: "Poppins", sans-serif;
-}
-
-body {
-    background: 
-        linear-gradient(rgba(0, 0, 0, 0.85), rgba(0, 0, 0, 0.95))
-        url("/static/images/stars.png");
-    background-size: cover;
-    background-repeat: repeat;
-    background-attachment: fixed;
+  }
+  
+  body {
+    background: linear-gradient(rgba(0, 0, 0, 0.85), rgba(0, 0, 0, 0.95));
     color: #ffffff;
     line-height: 1.6;
     font-size: 16px;
     padding-top: 80px;
     overflow-x: hidden;
-}
-
-
-
-/* ✅ Navigation Bar */
-nav {
+  }
+  
+  body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 100%;
+    pointer-events: none;
+    background: url('/static/images/stars.svg');
+    background-size: cover;
+    opacity: 0.07;
+    z-index: 0;
+  }
+  
+  /* ✅ Navigation Bar */
+  nav {
     position: fixed;
     top: 0;
     left: 0;
@@ -34,47 +41,87 @@ nav {
     display: flex;
     justify-content: center;
     gap: 20px;
-}
-
-nav a {
+  }
+  
+  nav a {
     color: #ffffff;
     text-decoration: none;
     font-size: 1rem;
     font-weight: 500;
     transition: 0.3s;
-}
-
-nav a:hover {
+  }
+  
+  nav a:hover {
     color: #9743F4;
-}
-
-/* ✅ Hero Section */
-.hero-section {
+  }
+  
+  /* ✅ Hero Section */
+  .hero-section {
+    background: linear-gradient(-45deg, #0d0d0d, #1c0e2a, #2e1445, #0d0d0d);
+    background-size: 400% 400%;
+    animation: gradientShift 15s ease infinite;
     text-align: center;
     padding: 100px 20px;
-    background: linear-gradient(180deg, rgba(10, 10, 10, 0.9), rgba(0, 0, 0, 0.7));
-}
-
-.hero-section h1 {
+    position: relative;
+    z-index: 1;
+  }
+  
+  @keyframes gradientShift {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+  
+  .hero-section h1 {
     font-size: 3rem;
     font-family: "Orbitron", sans-serif;
     font-weight: bold;
     text-transform: uppercase;
     letter-spacing: 2px;
-}
-
-.highlight {
+    color: #fff;
+    text-shadow: 0 0 10px rgba(151, 67, 244, 0.6);
+  }
+  
+  .highlight {
     color: #9743F4;
-}
-
-.tagline {
+  }
+  
+  .tagline {
     font-size: 1.2rem;
     color: #cccccc;
     margin-top: 10px;
-}
-
-/* ✅ Call-to-Action Section */
-.cta-section {
+  }
+  
+  /* ✅ Universal Section Wrapper */
+  .cosmic-section {
+    background: rgba(255, 255, 255, 0.04);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 30px;
+    border-radius: 16px;
+    box-shadow: 0 0 20px rgba(151, 67, 244, 0.15);
+    margin: 30px auto;
+    max-width: 800px;
+    animation: fadeIn 1s ease;
+  }
+  
+  @keyframes fadeIn {
+    0% { opacity: 0; transform: translateY(10px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+  
+  /* ✅ Page Title Style */
+  .page-title {
+    font-size: 2rem;
+    font-family: "Orbitron", sans-serif;
+    text-align: center;
+    margin-bottom: 20px;
+    text-shadow: 0 0 8px rgba(151, 67, 244, 0.5);
+    color: #fff;
+  }
+  
+  /* ✅ CTA Section */
+  .cta-section {
     text-align: center;
     margin-top: 40px;
     padding: 20px;
@@ -84,18 +131,18 @@ nav a:hover {
     margin-left: auto;
     margin-right: auto;
     box-shadow: 0px 0px 15px rgba(151, 67, 244, 0.2);
-}
-
-.cta-text {
+  }
+  
+  .cta-text {
     font-size: 1.2rem;
     font-weight: 500;
     color: #ffffff;
     margin-bottom: 15px;
-}
-
-/* ✅ Buttons */
-.btn-primary,
-.btn-secondary {
+  }
+  
+  /* ✅ Buttons */
+  .btn-primary,
+  .btn-secondary {
     display: inline-block;
     padding: 12px 20px;
     font-size: 1rem;
@@ -105,73 +152,48 @@ nav a:hover {
     text-align: center;
     font-weight: bold;
     margin: 10px;
-}
-
-.btn-primary {
+  }
+  
+  .btn-primary {
     background: linear-gradient(90deg, #9743F4, #19A7CE);
     color: #fff;
     box-shadow: 0px 0px 8px rgba(151, 67, 244, 0.6);
-}
-
-.btn-primary:hover {
+  }
+  
+  .btn-primary:hover {
     transform: scale(1.05);
     box-shadow: 0px 0px 15px rgba(151, 67, 244, 0.8);
-}
-
-.btn-secondary {
+  }
+  
+  .btn-secondary {
     background: rgba(255, 255, 255, 0.1);
     color: #ffffff;
     border: 2px solid #9743F4;
-}
-
-.btn-secondary:hover {
+  }
+  
+  .btn-secondary:hover {
     background: #9743F4;
     color: #fff;
-}
-
-/* ✅ Profile Page */
-.profile-container {
-    background: rgba(20, 20, 20, 0.9);
-    padding: 40px;
-    border-radius: 12px;
-    max-width: 600px;
-    margin: 30px auto;
-    text-align: center;
-    box-shadow: 0px 0px 15px rgba(255, 255, 255, 0.1);
-}
-
-.profile-container h2 {
+  }
+  
+  /* ✅ Forms */
+  input, textarea {
+    width: 100%;
+    padding: 12px;
+    border-radius: 8px;
+    border: none;
+    background: rgba(255, 255, 255, 0.07);
     color: #ffffff;
-}
-
-.profile-container p {
-    color: #cccccc;
-}
-
-.profile-image {
-    width: 120px;
-    height: 120px;
-    border-radius: 50%;
-    object-fit: cover;
-    border: 3px solid #9743F4;
-    margin-bottom: 10px;
-}
-
-/* ✅ Profile Names on Feed */
-.profile-name {
-    color: #ffffff !important; 
-    font-weight: bold;
-    text-decoration: none; 
-}
-
-.profile-name:hover {
-    color: #9743F4 !important; 
-    text-decoration: underline; 
-}
-
-
-/* ✅ Feed & Posts */
-.post-card {
+    font-size: 1rem;
+  }
+  
+  input:focus, textarea:focus {
+    outline: none;
+    border: 1px solid #9743F4;
+  }
+  
+  /* ✅ Post Cards */
+  .post-card {
     background: rgba(255, 255, 255, 0.05);
     padding: 20px;
     margin: 20px auto;
@@ -181,125 +203,57 @@ nav a:hover {
     backdrop-filter: blur(10px);
     box-shadow: 0px 0px 10px rgba(255, 255, 255, 0.1);
     transition: 0.3s ease-in-out;
-}
-
-.post-card:hover {
+  }
+  
+  .post-card:hover {
     box-shadow: 0px 0px 15px rgba(151, 67, 244, 0.5);
-}
-
-.success-messages {
-    list-style: none;
-    padding: 10px;
-    background-color: #4CAF50;
-    color: white;
-    border-radius: 5px;
-    margin-bottom: 10px;
-}
-
-.received-messages, .sent-messages {
-    list-style: none;
-    padding: 0;
-}
-
-.received-messages li, .sent-messages li {
-    padding: 10px;
-    background-color: rgba(255, 255, 255, 0.05);
-    margin-bottom: 5px;
-    border-radius: 8px;
-}
-
-.received-messages li strong, .sent-messages li strong {
-    color: #19A7CE;
-}
-
-.received-messages small, .sent-messages small {
-    display: block;
-    color: #cccccc;
-    font-size: 0.8rem;
-    margin-top: 5px;
-}
-
-/* ✅ Message Thread */
-.message-thread-container {
-    max-width: 600px;
-    margin: 30px auto;
-    background: rgba(20, 20, 20, 0.9);
-    padding: 20px;
-    border-radius: 10px;
-    box-shadow: 0px 0px 10px rgba(151, 67, 244, 0.5);
-}
-
-.messages-thread {
-    max-height: 400px;
-    overflow-y: auto;
-    padding: 15px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    margin-bottom: 20px;
-}
-
-/* ✅ Messages - Sent & Received */
-.message {
+  }
+  
+  /* ✅ Messages & Threads */
+  .message {
     padding: 10px;
     border-radius: 8px;
     margin-bottom: 10px;
     width: fit-content;
     max-width: 80%;
-}
-
-.sent {
+  }
+  
+  .sent {
     background: linear-gradient(90deg, #19A7CE, #9743F4);
     color: white;
     align-self: flex-end;
     text-align: right;
     margin-left: auto;
-}
-
-.received {
+  }
+  
+  .received {
     background: rgba(255, 255, 255, 0.1);
     color: #ffffff;
     align-self: flex-start;
-}
-
-.timestamp {
+  }
+  
+  .timestamp {
     display: block;
     font-size: 0.85rem;
     color: #bbb;
     margin-top: 5px;
     text-align: right;
-}
-
-/* ✅ Reply Section */
-.reply-section {
-    margin-top: 20px;
-}
-
-.reply-section form {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
-
-.no-messages {
-    text-align: center;
-    color: #ccc;
-    padding: 20px;
-}
-
-
-/* ✅ Flash Messages (Pop-up Style) */
-.flash-messages {
+  }
+  
+  /* ✅ Flash Messages */
+  .flash-messages {
     position: fixed;
-    top: 70px; /* Ensures it's BELOW the navbar */
+    top: 70px;
     left: 50%;
     transform: translateX(-50%);
     z-index: 1000;
     max-width: 400px;
     width: 100%;
     text-align: center;
-}
-
-.flash-message {
-    background: linear-gradient(90deg, #19A7CE, #9743F4); /* Cosmic purple gradient */
+  }
+  
+  .flash-message {
+    background: linear-gradient(90deg, #19A7CE, #9743F4);
     color: #ffffff;
     padding: 12px 20px;
     border-radius: 8px;
@@ -308,66 +262,34 @@ nav a:hover {
     opacity: 1;
     animation: fadeOut 5s ease-in-out forwards;
     margin-bottom: 10px;
-}
-
-/* ✅ Hide messages after 5 seconds */
-@keyframes fadeOut {
+  }
+  
+  @keyframes fadeOut {
     0% { opacity: 1; }
     80% { opacity: 1; }
     100% { opacity: 0; display: none; }
-}
-
-/* ✅ REMOVE DEFAULT GREEN BACKGROUND */
-ul.messages {
+  }
+  
+  ul.messages {
     list-style-type: none;
     padding: 0;
-}
-
-ul.messages li {
-    display: none !important; /* Hides Django's default messages */
-}
-
-
-/* ✅ Forms */
-input, textarea {
-    width: 100%;
-    padding: 12px;
-    border-radius: 8px;
-    border: none;
-    background: rgba(255, 255, 255, 0.1);
-    color: #ffffff;
-    font-size: 1rem;
-}
-
-input:focus, textarea:focus {
-    outline: none;
-    border: 1px solid #9743F4;
-}
-
-/* ✅ Footer */
-footer {
+  }
+  
+  ul.messages li {
+    display: none !important;
+  }
+  
+  /* ✅ Footer */
+  footer {
     text-align: center;
     padding: 20px;
     background: rgba(0, 0, 0, 0.7);
     color: #cccccc;
     font-size: 0.9rem;
-}
-
-/* ✅ Subtle Cosmic Glow Effects */
-.glow-text {
+  }
+  
+  /* ✅ Glow Text */
+  .glow-text {
     text-shadow: 0px 0px 5px rgba(151, 67, 244, 0.8);
-}
-
-body::before {
-    content: '';
-    position: fixed;
-    top: 0;
-    left: 0;
-    height: 100%;
-    width: 100%;
-    pointer-events: none;
-    background: url('/static/images/stars.svg'); /* replace with your own SVG/PNG of stars */
-    background-size: cover;
-    opacity: 0.07;
-    z-index: 0;
-}
+  }
+  
