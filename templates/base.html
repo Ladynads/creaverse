@@ -6,10 +6,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CreatorVerse</title>
-    <link rel="stylesheet" href="{% static 'css/styles.css' %}"> 
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    <!-- Add Google Fonts for modern typography -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
 </head>
 <body>
-
     <!-- ✅ Flash Messages (Pop-up Style) -->
     {% if messages %}
         <div class="flash-messages">
@@ -22,36 +23,49 @@
     {% endif %}
 
     <!-- ✅ Navigation Bar -->
-    <nav>
-        {% if user.is_authenticated %}
-            <a href="{% url 'feed' %}">🏠 Feed</a> |
-            <a href="{% url 'profile' %}">👤 Profile</a> |
-            <a href="{% url 'invite_friends' %}">Invite Friends</a> |
-
-            <!-- ✅ Messages with Notification Badge -->
-            <a href="{% url 'message_list' %}">
-                📩 Messages
-                {% if unread_count and unread_count > 0 %}
-                    <span class="badge">{{ unread_count }}</span>  <!-- 🔴 Unread Messages Badge -->
+    <header class="header">
+        <nav class="navbar">
+            <a href="{% url 'home' %}" class="logo">CreatorVerse</a>
+            <ul class="nav-links">
+                {% if user.is_authenticated %}
+                    <li><a href="{% url 'feed' %}">Feed</a></li>
+                    <li><a href="{% url 'profile' %}">Profile</a></li>
+                    <li><a href="{% url 'invite_friends' %}">Invite Friends</a></li>
+                    <li>
+                        <a href="{% url 'message_list' %}">
+                            Messages
+                            {% if unread_count and unread_count > 0 %}
+                                <span class="badge">{{ unread_count }}</span>  <!-- 🔴 Unread Messages Badge -->
+                            {% endif %}
+                        </a>
+                    </li>
+                    <li>
+                        <form id="logout-form" action="{% url 'logout' %}" method="post" style="display: inline;">
+                            {% csrf_token %}
+                            <button type="submit" class="btn-logout">Log Out</button>
+                        </form>
+                    </li>
+                {% else %}
+                    <li><a href="{% url 'login' %}">Log In</a></li>
+                    <li><a href="{% url 'register' %}">Sign Up</a></li>
                 {% endif %}
-            </a> |
+            </ul>
+        </nav>
+    </header>
 
-            <form id="logout-form" action="{% url 'logout' %}" method="post" style="display: inline;">
-                {% csrf_token %}
-                <button type="submit">🚪 Logout</button>
-            </form>
-        {% endif %}
-    </nav>
-
-    <main>
+    <main class="main-content">
         {% block content %}{% endblock %}
     </main>
+
+    <!-- ✅ Footer -->
+    <footer class="footer">
+        <p>&copy; 2025 CreatorVerse. All rights reserved.</p>
+    </footer>
 
     <!-- ✅ Global JavaScript File -->
     <script src="{% static 'js/script.js' %}" defer></script>
 </body>
 </html>
-
 
 
 

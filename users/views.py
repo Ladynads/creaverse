@@ -5,8 +5,9 @@ from django.urls import reverse_lazy
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.csrf import csrf_protect
 from django.core.mail import send_mail
+from django.core.paginator import Paginator
 from django.conf import settings
 from django.db.models import Q
 from .forms import CustomUserCreationForm, MessageForm
@@ -86,6 +87,7 @@ def profile_edit(request):
         if 'profile_image' in request.FILES:
             user.profile_image = request.FILES['profile_image']
         user.save()
+        messages.success(request, "Profile updated successfully!")
         return redirect('profile')
 
     return render(request, 'users/profile_edit.html')
@@ -111,15 +113,13 @@ def invite_view(request):
     invite_codes = InviteCode.objects.filter(created_by=request.user)
     return render(request, "users/invite.html", {"invite_codes": invite_codes})
 
-
 @login_required
-@csrf_exempt
+@csrf_protect
 def send_invite_email(request):
     """Handles sending an invite code via email."""
     if request.method == "POST":
-        data = request.POST if request.POST else request.body.decode('utf-8')
-        email = data.get('email')
-        code = data.get('code')
+        email = request.POST.get('email')
+        code = request.POST.get('code')
 
         if email and code:
             try:
@@ -135,6 +135,7 @@ def send_invite_email(request):
                 return JsonResponse({'success': False, 'message': str(e)})
 
     return JsonResponse({'success': False, 'message': 'Invalid request!'})
+
 
 
 # ✅ Generate Invite Code
@@ -153,6 +154,16 @@ def message_list(request):
     """View to show received and sent messages."""
     received_messages = Message.objects.filter(receiver=request.user).select_related("sender").order_by('-created_at')
     sent_messages = Message.objects.filter(sender=request.user).select_related("receiver").order_by('-created_at')
+
+    # Paginate received messages
+    received_paginator = Paginator(received_messages, 10)  # Show 10 messages per page
+    received_page = request.GET.get('received_page')
+    received_messages = received_paginator.get_page(received_page)
+
+    # Paginate sent messages
+    sent_paginator = Paginator(sent_messages, 10)  # Show 10 messages per page
+    sent_page = request.GET.get('sent_page')
+    sent_messages = sent_paginator.get_page(sent_page)
 
     return render(request, "users/message_list.html", {
         "received_messages": received_messages,
