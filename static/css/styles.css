@@ -7,12 +7,20 @@
 }
 
 body {
-    background-color: #0d0d0d;
+    background: 
+        linear-gradient(rgba(0, 0, 0, 0.85), rgba(0, 0, 0, 0.95))
+        url("/static/images/stars.png");
+    background-size: cover;
+    background-repeat: repeat;
+    background-attachment: fixed;
     color: #ffffff;
     line-height: 1.6;
     font-size: 16px;
     padding-top: 80px;
+    overflow-x: hidden;
 }
+
+
 
 /* ✅ Navigation Bar */
 nav {
@@ -348,4 +356,18 @@ footer {
 /* ✅ Subtle Cosmic Glow Effects */
 .glow-text {
     text-shadow: 0px 0px 5px rgba(151, 67, 244, 0.8);
+}
+
+body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 100%;
+    pointer-events: none;
+    background: url('/static/images/stars.svg'); /* replace with your own SVG/PNG of stars */
+    background-size: cover;
+    opacity: 0.07;
+    z-index: 0;
 }
