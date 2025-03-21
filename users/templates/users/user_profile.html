@@ -15,8 +15,9 @@
 
 <!-- ✅ Message Button (Only for other users) -->
 {% if user != profile_user %}
-    <p><a href="{% url 'send_message' profile_user.id %}" class="btn btn-primary">📩 Message {{ profile_user.username }}</a></p>
+    <p><a href="{% url 'send_message' user_id=profile_user.id %}" class="btn btn-primary">📩 Message {{ profile_user.username }}</a></p>
 {% endif %}
+
 
 <h3>Recent Posts:</h3>
 <ul>

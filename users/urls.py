@@ -18,7 +18,7 @@ urlpatterns = [
 
     # ✅ Private Messaging (DMs)
     path('messages/', message_list, name='message_list'),
-    path('messages/send/', send_message, name='send_message'),
+    path('messages/send/<int:user_id>/', send_message, name='send_message'),
     path('messages/thread/<int:receiver_id>/', message_thread, name='message_thread'),
 
     # ✅ Invite Code System
