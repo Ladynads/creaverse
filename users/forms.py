@@ -23,3 +23,8 @@ class MessageForm(forms.ModelForm):
         widgets = {
             "content": forms.Textarea(attrs={"placeholder": "Type your message...", "rows": 4})
         }
+
+class ProfileEditForm(forms.ModelForm):
+    class Meta:
+        model = CustomUser
+        fields = ['username', 'email', 'bio', 'profile_image']

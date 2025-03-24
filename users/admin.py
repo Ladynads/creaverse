@@ -36,8 +36,32 @@ class MessageAdmin(admin.ModelAdmin):
 
 # ✅ Register User Interaction Model
 class UserInteractionAdmin(admin.ModelAdmin):
-    list_display = ("user", "post", "liked", "commented", "viewed", "timestamp")
-    list_filter = ("liked", "commented", "viewed", "timestamp")
+    # Displaying the interaction types
+    list_display = ("user", "post", "interaction_type", "timestamp")
+
+    # Filter by interaction type
+    list_filter = ("interaction_type", "timestamp")
+
+    # Custom method to show if the post is liked
+    def liked(self, obj):
+        return obj.interaction_type == 'LIKE'
+    
+    liked.boolean = True
+    liked.short_description = 'Liked'
+
+    # Custom method to show if the post is commented
+    def commented(self, obj):
+        return obj.interaction_type == 'COMMENT'
+    
+    commented.boolean = True
+    commented.short_description = 'Commented'
+
+    # Custom method to show if the post is viewed
+    def viewed(self, obj):
+        return obj.interaction_type == 'VIEW'
+    
+    viewed.boolean = True
+    viewed.short_description = 'Viewed'
 
 
 # ✅ Add to Django Admin
@@ -46,3 +70,4 @@ admin.site.register(InviteCode, InviteCodeAdmin)
 admin.site.register(Comment, CommentAdmin)
 admin.site.register(Message, MessageAdmin)
 admin.site.register(UserInteraction, UserInteractionAdmin)
+

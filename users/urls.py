@@ -1,32 +1,32 @@
 from django.urls import path
-from .views import (
-    register, CustomLoginView, CustomLogoutView, profile_view, profile_edit, user_profile,
-    message_list, send_message, message_thread, delete_message,  
-    generate_invite, send_invite_email, invite_view
-)
+from . import views
 
 urlpatterns = [
-    # ✅ Authentication Routes
-    path('register/', register, name='register'),
-    path('login/', CustomLoginView.as_view(), name='login'),
-    path('logout/', CustomLogoutView.as_view(), name='logout'),
-
-    # ✅ Profile Routes
-    path('profile/', profile_view, name='profile'),
-    path('profile/edit/', profile_edit, name='profile_edit'),
-    path('profile/<str:username>/', user_profile, name='user_profile'),
-
-    # ✅ Private Messaging (DMs)
-    path('messages/', message_list, name='message_list'),  # ✅ Message List
-    path('messages/send/<int:user_id>/', send_message, name='send_message'),  # ✅ Send Message
-    path('messages/thread/<int:receiver_id>/', message_thread, name='message_thread'),  # ✅ Message Thread
-    path('messages/delete/<int:message_id>/', delete_message, name='delete_message'),  # ✅ Delete Message
-
-    # ✅ Invite Code System
-    path("invite/", invite_view, name="invite_friends"),  # ✅ Invite Page
-    path("invite/generate/", generate_invite, name="generate_invite"),  # ✅ Generate Invite Code
-    path("invite/send-email/", send_invite_email, name="send_invite_email"),  # ✅ Send Invite via Email
+    # Authentication
+    path('register/', views.register, name='register'),
+    path('login/', views.CustomLoginView.as_view(), name='login'),
+    path('logout/', views.CustomLogoutView.as_view(), name='logout'),
+    
+    # Profiles
+    path('profile/<str:username>/', views.profile_view, name='profile'),
+    path('profile/edit/', views.profile_edit, name='profile_edit'),
+    
+    # Following
+    path('profile/<str:username>/follow/', views.follow_user, name='follow_user'),
+    path('profile/<str:username>/unfollow/', views.unfollow_user, name='unfollow_user'),
+    
+    # Messaging
+    path('messages/', views.message_list, name='message_list'),
+    path('messages/send/<int:user_id>/', views.send_message, name='send_message'),
+    path('messages/thread/<int:receiver_id>/', views.message_thread, name='message_thread'),
+    path('messages/delete/<int:message_id>/', views.delete_message, name='delete_message'),
+    
+    # Invites
+    path('invite/', views.invite_view, name='invite_friends'),
+    path('invite/generate/', views.generate_invite, name='generate_invite'),
+    path('invite/send-email/', views.send_invite_email, name='send_invite_email'),
 ]
+
 
 
 

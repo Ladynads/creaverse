@@ -2,45 +2,64 @@
 {% load static %}
 
 {% block content %}
-<div class="profile-container cosmic-section">
+<div class="profile-container">
     <!-- Profile Header -->
     <div class="profile-header">
-        <h2 class="page-title glow-text">👤 {{ profile_user.username }}'s Profile</h2>
-        {% if profile_user.profile_image %}
-            <img src="{{ profile_user.profile_image.url }}" alt="Profile Image" class="profile-img">
-        {% else %}
-            <img src="{% static 'profile_pics/default_profile.webp' %}" alt="Default Profile Image" class="profile-img">
-        {% endif %}
-    </div>
-
-    <!-- User Bio & Info -->
-    <div class="profile-info">
-        <p><strong>Bio:</strong> {{ profile_user.bio|default_if_none:"No bio yet." }}</p>
-        <p><strong>Email:</strong> {{ profile_user.email }}</p>
-        <a href="{% url 'profile_edit' %}" class="btn btn-primary">✏ Edit Profile</a>
+        <div class="profile-picture">
+            {% if profile_user.profile_image %}
+                <img src="{{ profile_user.profile_image.url }}" alt="Profile Image" class="profile-img">
+            {% else %}
+                <img src="{% static 'profile_pics/default_profile.webp' %}" alt="Default Profile Image" class="profile-img">
+            {% endif %}
+        </div>
+        <div class="profile-info">
+            <h1 class="username glow-text">{{ profile_user.username }}</h1>
+            <p class="bio">{{ profile_user.bio|default_if_none:"No bio yet." }}</p>
+            <div class="stats">
+                <span class="stat"><strong>Posts:</strong> {{ user_posts|length }}</span>
+                <span class="stat"><strong>Followers:</strong> {{ followers_count }}</span>
+                <span class="stat"><strong>Following:</strong> {{ following_count }}</span>
+            </div>
+            
+            {% if profile_user != user %}
+                {% if is_following %}
+                    <a href="{% url 'unfollow_user' username=profile_user.username %}" class="btn btn-unfollow">Unfollow</a>
+                {% else %}
+                    <a href="{% url 'follow_user' username=profile_user.username %}" class="btn btn-follow">Follow</a>
+                {% endif %}
+            {% endif %}
+        </div>
     </div>
 
     <!-- Create Post Button -->
     {% if profile_user == user %}
-        <a href="{% url 'feed' %}" class="btn btn-success">➕ Create a New Post</a>
+        <div class="create-post">
+            <a href="{% url 'feed' %}" class="btn btn-create">➕ Create a New Post</a>
+        </div>
     {% endif %}
 
     <!-- User Posts -->
-    <h3>Your Posts:</h3>
-    <div class="post-list">
-        {% for post in user_posts %}
-            <div class="post-card">
-                <p><strong>{{ post.created_at|date:"F j, Y, g:i a" }}</strong></p>
-                <p>{{ post.content }}</p>
-                <p>❤️ {{ post.likes.count }} Likes | 💬 {{ post.comments.count }} Comments</p>
-                <a href="{% url 'post_detail' post.id %}" class="btn btn-sm btn-outline-primary">View Post</a>
-            </div>
-        {% empty %}
-            <p>No posts yet.</p>
-        {% endfor %}
+    <div class="posts-section">
+        <h2 class="section-title">Your Posts</h2>
+        <div class="post-grid">
+            {% for post in user_posts %}
+                <div class="post-card">
+                    <p class="post-date">{{ post.created_at|date:"F j, Y, g:i a" }}</p>
+                    <p class="post-content">{{ post.content }}</p>
+                    <div class="post-stats">
+                        <span class="likes">❤️ {{ post.likes.count }} Likes</span>
+                        <span class="comments">💬 {{ post.comments.count }} Comments</span>
+                    </div>
+                    <a href="{% url 'post_detail' post.id %}" class="btn btn-view">View Post</a>
+                    <!-- Like Button -->
+                    <button class="like-btn">🤍 Like</button>
+                </div>
+            {% empty %}
+                <p class="no-posts">No posts yet.</p>
+            {% endfor %}
+        </div>
     </div>
 </div>
-
 {% endblock %}
 
 

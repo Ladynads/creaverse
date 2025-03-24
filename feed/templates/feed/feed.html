@@ -22,7 +22,7 @@
                 <img src="{{ post.user.profile_image.url }}" alt="{{ post.user.username }}" class="post-avatar">
                 <div class="post-user">
                     <strong>
-                        <a href="{% url 'user_profile' post.user.username %}" class="username">
+                        <a href="{% url 'profile' username=post.user.username %}" class="username">  <!-- Fixed -->
                             {{ post.user.username }}
                         </a>
                     </strong>
@@ -63,7 +63,7 @@
                     {% for comment in post.comments.all %}
                     <li class="comment-item">
                         <strong>
-                            <a href="{% url 'user_profile' comment.user.username %}" class="username">
+                            <a href="{% url 'profile' username=comment.user.username %}" class="username">  <!-- Fixed -->
                                 {{ comment.user.username }}
                             </a>
                         </strong>: {{ comment.content }}
@@ -202,6 +202,7 @@ document.addEventListener("DOMContentLoaded", function () {
 </script>
 
 {% endblock %}
+
 
 
 
