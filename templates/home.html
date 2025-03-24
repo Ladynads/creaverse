@@ -37,9 +37,14 @@
         {% for creator in featured_creators %}
         <div class="creator-card" 
              style="border-top: 3px solid {% cycle '#9743F4' '#19A7CE' '#FF6B6B' '#6BCB77' '#FFD93D' %};">
-            <div class="creator-avatar" 
-                 style="background-image: url('{{ creator.profile_image.url }}');
-                        border-color: {% cycle '#9743F4' '#19A7CE' '#FF6B6B' '#6BCB77' '#FFD93D' %};">
+            <div class="creator-avatar">
+                {% if creator.profile_image %}
+                <img src="{{ creator.profile_image.url }}" alt="{{ creator.username }}'s profile picture">
+                {% else %}
+                <div class="default-avatar" style="background-color: {% cycle '#9743F4' '#19A7CE' '#FF6B6B' '#6BCB77' '#FFD93D' %}">
+                    {{ creator.username|first|upper }}
+                </div>
+                {% endif %}
                 {% if creator.is_verified %}
                 <div class="verified-badge">
                     <i class="fas fa-check-circle"></i>
@@ -47,10 +52,10 @@
                 {% endif %}
             </div>
             <h3>{{ creator.username }}</h3>
-            <p class="creator-bio">{{ creator.bio|truncatechars:50 }}</p>
+            <p class="creator-bio">{{ creator.bio|default:"No bio yet"|truncatechars:50 }}</p>
             <div class="creator-stats">
-                <span><i class="fas fa-heart"></i> {{ creator.like_count|default:"0" }}</span>
-                <span><i class="fas fa-image"></i> {{ creator.post_count|default:"0" }}</span>
+                <span><i class="fas fa-users"></i> {{ creator.follower_count }}</span>
+                <span><i class="fas fa-image"></i> {{ creator.post_count }}</span>
             </div>
             <a href="{% url 'profile' username=creator.username %}" class="btn btn-small glow-on-hover">
                 <i class="fas fa-eye"></i> View Profile

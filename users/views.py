@@ -1,3 +1,4 @@
+# Core Django
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, logout, get_user_model
 from django.contrib.auth.views import LoginView, LogoutView
@@ -5,22 +6,37 @@ from django.urls import reverse_lazy
 from django.contrib.auth.decorators import login_required
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib import messages
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponseRedirect
 from django.views.decorators.http import require_http_methods, require_POST
 from django.views.decorators.csrf import csrf_protect
 from django.core.mail import send_mail
-from django.core.paginator import Paginator
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.conf import settings
-from django.db.models import Q, Count
+from django.db.models import Q, Count, F, Prefetch
 from django.utils import timezone
+from django.views.generic import ListView, DetailView, CreateView, UpdateView
+from django.db import transaction
+
+# Forms & Models
 from .forms import CustomUserCreationForm, MessageForm, ProfileEditForm
-from .models import CustomUser, InviteCode, Message, UserInteraction
+from .models import CustomUser as User, InviteCode, Message, UserInteraction
 from feed.models import Post, Like, Comment
 
-User = get_user_model()  
+# Utilities
+import logging
+from datetime import timedelta
+from django.core.cache import cache
+from django.utils.decorators import method_decorator
+from django.views.decorators.cache import cache_page
+
+# ===== Helper Functions =====
+def get_unread_count(user):
+    """Count unread messages for a user"""
+    if not user.is_authenticated:
+        return 0
+    return Message.objects.filter(receiver=user, is_read=False).count()
 
 # ===== HTMX Views =====
-
 @login_required
 @require_http_methods(["GET"])
 def user_stats_view(request, username):
@@ -56,7 +72,6 @@ def profile_tab_content(request, username, tab_name):
     })
 
 # ===== Authentication Views =====
-
 def register(request):
     """Invite-only registration with optimized queries"""
     if request.method == "POST":
@@ -89,7 +104,6 @@ class CustomLogoutView(LogoutView):
         return redirect(self.next_page)
 
 # ===== Profile Views =====
-
 @login_required
 def profile_view(request, username):
     """View user profile with optimized queries and follow functionality"""
@@ -136,7 +150,6 @@ def profile_edit(request):
     })
 
 # ===== Social Interaction Views =====
-
 @login_required
 @require_POST
 def follow_toggle(request, username):
@@ -187,7 +200,6 @@ def update_social_links(request):
     return JsonResponse({'success': False})
 
 # ===== Invite System Views =====
-
 @login_required
 def invite_view(request):
     """View for managing invite codes"""
@@ -236,7 +248,6 @@ def generate_invite(request):
     })
 
 # ===== Messaging Views =====
-
 @login_required
 def message_list(request):
     """List all messages"""
@@ -314,7 +325,6 @@ def delete_message(request, message_id):
     return JsonResponse({'success': False, 'error': "Permission denied"})
 
 # ===== Admin Views =====
-
 @login_required
 @staff_member_required
 def verify_user(request, user_id):
@@ -325,18 +335,24 @@ def verify_user(request, user_id):
     return JsonResponse({'success': True, 'is_verified': True})
 
 # ===== Home View =====
-
 def home_view(request):
-    featured_creators = CustomUser.objects.filter(
-        is_verified=True
-    ).annotate(
-        follower_count=Count('followers'),
-        post_count=Count('post')
-    ).order_by('-follower_count')[:3]
-    
+    """Home page view with featured creators"""
+    featured_creators = (
+        User.objects.filter(is_verified=True)
+        .annotate(
+            follower_count=Count('followers', distinct=True),
+            post_count=Count('posts', distinct=True)
+        )
+        .only('username', 'bio', 'profile_image', 'is_verified')  # Optimize query
+        .order_by('-follower_count', '-post_count')[:5]
+    )
+
+    unread_count = get_unread_count(request.user) if request.user.is_authenticated else 0
+
     return render(request, "home.html", {
         "featured_creators": featured_creators,
-        "unread_count": get_unread_count(request.user) if request.user.is_authenticated else 0
+        "unread_count": unread_count,
+        "now": timezone.now()
     })
 
 
