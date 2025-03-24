@@ -1,18 +1,82 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block content %}
 <section class="hero-section">
-    <h1>Unleash Your Creativity</h1>
-    <p>Join a vibrant community of creators, share your work, and discover endless inspiration.</p>
-    <div class="cta-buttons">
-        <a href="{% url 'register' %}" class="btn btn-primary">Get Started</a>  <!-- Updated to 'register' -->
-        <a href="{% url 'feed' %}" class="btn btn-secondary">Explore the Feed</a>
+    <div class="hero-content">
+        <h1 class="hero-title">Unleash Your Creativity</h1>
+        <p class="hero-subtitle">Join a vibrant community of creators, share your work, and discover endless inspiration.</p>
+        
+        <div class="cta-buttons">
+            {% if user.is_authenticated %}
+                <a href="{% url 'feed' %}" class="btn btn-primary glow-on-hover">
+                    <i class="fas fa-compass"></i> Explore the Feed
+                </a>
+                <a href="{% url 'profile' username=request.user.username %}" class="btn btn-secondary">
+                    <i class="fas fa-user-edit"></i> Your Profile
+                </a>
+            {% else %}
+                <a href="{% url 'register' %}" class="btn btn-primary glow-on-hover">
+                    <i class="fas fa-rocket"></i> Get Started
+                </a>
+                <a href="{% url 'feed' %}" class="btn btn-secondary">
+                    <i class="fas fa-compass"></i> Explore as Guest
+                </a>
+            {% endif %}
+        </div>
+    </div>
+    
+    <div class="hero-image">
+        <img src="{% static 'images/hero-illustration.svg' %}" alt="Creators collaborating" class="hero-illustration">
     </div>
 </section>
-<section class="featured-content">
-    <h2>Featured Creators</h2>
-    <div class="grid">
-        <!-- Featured posts or creators go here -->
+
+<section class="featured-section">
+    <h2 class="section-title"><i class="fas fa-star"></i> Featured Creators</h2>
+    <div class="featured-grid">
+        {% for creator in featured_creators %}
+        <div class="creator-card" 
+             style="border-top: 3px solid {% cycle '#9743F4' '#19A7CE' '#FF6B6B' '#6BCB77' '#FFD93D' %};">
+            <div class="creator-avatar" 
+                 style="background-image: url('{{ creator.profile_image.url }}');
+                        border-color: {% cycle '#9743F4' '#19A7CE' '#FF6B6B' '#6BCB77' '#FFD93D' %};">
+                {% if creator.is_verified %}
+                <div class="verified-badge">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                {% endif %}
+            </div>
+            <h3>{{ creator.username }}</h3>
+            <p class="creator-bio">{{ creator.bio|truncatechars:50 }}</p>
+            <div class="creator-stats">
+                <span><i class="fas fa-heart"></i> {{ creator.like_count|default:"0" }}</span>
+                <span><i class="fas fa-image"></i> {{ creator.post_count|default:"0" }}</span>
+            </div>
+            <a href="{% url 'profile' username=creator.username %}" class="btn btn-small glow-on-hover">
+                <i class="fas fa-eye"></i> View Profile
+            </a>
+        </div>
+        {% empty %}
+        <div class="empty-state">
+            <i class="fas fa-users-slash fa-3x"></i>
+            <p>Be the first featured creator!</p>
+            <a href="{% url 'register' %}" class="btn btn-primary">Join Now</a>
+        </div>
+        {% endfor %}
+    </div>
+</section>
+
+<section class="testimonials">
+    <h2 class="section-title"><i class="fas fa-quote-left"></i> What Our Creators Say</h2>
+    <div class="testimonial-carousel">
+        <div class="testimonial">
+            <p>"This platform transformed my creative workflow!"</p>
+            <div class="author">- Maya, Digital Artist</div>
+        </div>
+        <div class="testimonial">
+            <p>"Found my best collaborators here."</p>
+            <div class="author">- James, Photographer</div>
+        </div>
     </div>
 </section>
 {% endblock %}

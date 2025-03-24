@@ -327,16 +327,16 @@ def verify_user(request, user_id):
 # ===== Home View =====
 
 def home_view(request):
-    """Home page view"""
-    unread_count = 0
-    if request.user.is_authenticated:
-        unread_count = Message.objects.filter(
-            receiver=request.user, 
-            is_read=False
-        ).count()
+    featured_creators = CustomUser.objects.filter(
+        is_verified=True
+    ).annotate(
+        follower_count=Count('followers'),
+        post_count=Count('post')
+    ).order_by('-follower_count')[:3]
     
     return render(request, "home.html", {
-        "unread_count": unread_count
+        "featured_creators": featured_creators,
+        "unread_count": get_unread_count(request.user) if request.user.is_authenticated else 0
     })
 
 
