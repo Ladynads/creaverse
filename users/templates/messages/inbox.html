@@ -1,26 +1,45 @@
 {% extends "base.html" %}
 {% block content %}
-<h2>📩 Your Conversations</h2>
+<div class="inbox-container">
+    <h2 class="inbox-header">📬 Your Conversations</h2>
+    
+    <!-- Search Bar -->
+    <div class="search-bar">
+        <input type="text" id="message-search" placeholder="Search conversations..." aria-label="Search messages">
+        <button class="search-button">🔍</button>
+    </div>
 
-<ul>
-    {% for message in messages %}
-        <li>
-            <a href="{% url 'message_thread' message.sender.id %}">
-                <strong>
-                    <a href="{% url 'user_profile' message.sender.username %}">
-                        {{ message.sender.username }}
+    <!-- Message List -->
+    <div class="message-list">
+        {% for message in messages %}
+            <div class="message-preview {% if not message.is_read %}unread{% endif %}">
+                <a href="{% url 'user_profile' message.sender.username %}" class="avatar-link">
+                    <img src="{{ message.sender.profile.image.url|default:'/static/images/default-avatar.png' }}" 
+                         class="avatar" alt="{{ message.sender.username }}">
+                </a>
+                <div class="message-content">
+                    <a href="{% url 'message_thread' message.sender.id %}" class="thread-link">
+                        <div class="message-meta">
+                            <span class="sender-name">{{ message.sender.username }}</span>
+                            <span class="timestamp">{{ message.timestamp|timesince }} ago</span>
+                        </div>
+                        <p class="message-snippet">
+                            {{ message.content|truncatewords:15 }}
+                        </p>
+                        {% if not message.is_read %}
+                            <span class="unread-badge">New</span>
+                        {% endif %}
                     </a>
-                </strong>: 
-                {{ message.content|truncatewords:10 }}
-                {% if not message.is_read %}
-                    <span style="color: red;">(New)</span>
-                {% endif %}
-            </a>
-        </li>
-    {% empty %}
-        <p>No messages yet. Start a conversation!</p>
-    {% endfor %}
-</ul>
+                </div>
+            </div>
+        {% empty %}
+            <div class="empty-inbox">
+                <p>No messages yet. 😢</p>
+                <a href="{% url 'send_message' %}" class="btn-start-convo">Start a conversation</a>
+            </div>
+        {% endfor %}
+    </div>
+</div>
 {% endblock %}
 
 

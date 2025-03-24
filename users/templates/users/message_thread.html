@@ -1,34 +1,276 @@
 {% extends "base.html" %}
 {% block content %}
 <div class="message-thread-container">
-    <h2>Conversation with {{ receiver.username }}</h2>
+    <!-- Header with user info and back button -->
+    <div class="thread-header">
+        <a href="{% url 'inbox' %}" class="btn-back">
+            <i class="fas fa-arrow-left"></i>
+        </a>
+        <div class="user-info">
+            <img src="{{ receiver.profile.image.url|default:'/static/images/default-avatar.png' }}" 
+                 class="thread-avatar" alt="{{ receiver.username }}">
+            <h2>{{ receiver.username }}</h2>
+            {% if receiver.is_online %}
+                <span class="online-status">Online</span>
+            {% endif %}
+        </div>
+    </div>
 
-    <!-- ✅ Display Message Thread -->
-    <div class="messages-thread">
+    <!-- Message Thread with modern bubbles -->
+    <div class="messages-thread" id="message-container">
         {% for msg in messages %}
-            <div class="message {% if msg.sender == request.user %}sent{% else %}received{% endif %}">
+            <div class="message-bubble {% if msg.sender == request.user %}sent{% else %}received{% endif %}" 
+                 data-message-id="{{ msg.id }}">
+                {% if msg.sender != request.user %}
+                    <img src="{{ msg.sender.profile.image.url|default:'/static/images/default-avatar.png' }}" 
+                         class="message-avatar" alt="{{ msg.sender.username }}">
+                {% endif %}
                 <div class="message-content">
-                    <p><strong>{{ msg.sender.username }}:</strong> {{ msg.content }}</p>
+                    <p>{{ msg.content }}</p>
+                    <div class="message-meta">
+                        <span class="timestamp">{{ msg.created_at|timesince }} ago</span>
+                        {% if msg.sender == request.user %}
+                            <span class="read-status">
+                                {% if msg.is_read %}✓✓{% else %}✓{% endif %}
+                            </span>
+                        {% endif %}
+                    </div>
                 </div>
-                <small class="timestamp">{{ msg.created_at|date:"F j, Y, g:i a" }}</small>
             </div>
         {% empty %}
-            <p class="no-messages">No messages in this conversation yet.</p>
+            <div class="no-messages">
+                <img src="/static/images/empty-chat.svg" alt="No messages" class="empty-icon">
+                <p>Start your conversation with {{ receiver.username }}</p>
+            </div>
         {% endfor %}
     </div>
 
-    <!-- ✅ Reply Form -->
-    <div class="reply-section">
-        <h3>Reply to {{ receiver.username }}</h3>
-        <form method="post">
-            {% csrf_token %}
-            {{ form.as_p }}
-            <button type="submit" class="btn-primary">Send Reply</button>
-        </form>
-    </div>
-
-    <a href="{% url 'message_list' %}" class="btn-secondary">Back to Messages</a>
+    <!-- Enhanced Reply Form -->
+    <form class="message-form" method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="compose-area">
+            <button type="button" class="emoji-btn" title="Add emoji">
+                <i class="far fa-smile"></i>
+            </button>
+            <textarea name="content" placeholder="Type your message..." 
+                      class="auto-resize" required></textarea>
+            <div class="attachment-options">
+                <input type="file" id="file-upload" name="attachment" hidden>
+                <label for="file-upload" class="attachment-btn" title="Attach file">
+                    <i class="fas fa-paperclip"></i>
+                </label>
+            </div>
+        </div>
+        <div class="form-footer">
+            <button type="submit" class="btn-send">
+                Send <i class="fas fa-paper-plane"></i>
+            </button>
+        </div>
+    </form>
 </div>
+
+<!-- Typing indicator template (hidden by default) -->
+<div id="typing-indicator" class="typing-indicator received" style="display:none;">
+    <div class="message-content">
+        <div class="typing-dots">
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Thread Header */
+    .thread-header {
+        display: flex;
+        align-items: center;
+        padding: 15px;
+        border-bottom: 1px solid #f0f0f0;
+        position: sticky;
+        top: 0;
+        background: white;
+        z-index: 10;
+    }
+    
+    .btn-back {
+        color: #9743F4;
+        font-size: 1.2rem;
+        margin-right: 15px;
+    }
+    
+    .user-info {
+        display: flex;
+        align-items: center;
+    }
+    
+    .thread-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        margin-right: 10px;
+        object-fit: cover;
+    }
+    
+    .online-status {
+        font-size: 0.8rem;
+        color: #6BCB77;
+        margin-left: 10px;
+    }
+    
+    /* Message Thread */
+    .messages-thread {
+        padding: 15px;
+        overflow-y: auto;
+        max-height: 60vh;
+        scroll-behavior: smooth;
+    }
+    
+    .message-bubble {
+        max-width: 70%;
+        margin-bottom: 15px;
+        display: flex;
+        align-items: flex-end;
+    }
+    
+    .message-bubble.sent {
+        margin-left: auto;
+        flex-direction: row-reverse;
+    }
+    
+    .message-avatar {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        margin-right: 8px;
+        object-fit: cover;
+        align-self: flex-end;
+    }
+    
+    .message-bubble.sent .message-avatar {
+        display: none;
+    }
+    
+    .message-content {
+        padding: 12px 15px;
+        border-radius: 18px;
+        position: relative;
+        line-height: 1.4;
+    }
+    
+    .message-bubble.received .message-content {
+        background: #f0f0f0;
+        border-bottom-left-radius: 4px;
+    }
+    
+    .message-bubble.sent .message-content {
+        background: #9743F4;
+        color: white;
+        border-bottom-right-radius: 4px;
+    }
+    
+    .message-meta {
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+        margin-top: 5px;
+        font-size: 0.75rem;
+    }
+    
+    .timestamp {
+        opacity: 0.7;
+    }
+    
+    .read-status {
+        margin-left: 5px;
+    }
+    
+    /* Compose Area */
+    .message-form {
+        padding: 15px;
+        border-top: 1px solid #f0f0f0;
+        background: white;
+        position: sticky;
+        bottom: 0;
+    }
+    
+    .compose-area {
+        display: flex;
+        align-items: center;
+        background: #f8f8f8;
+        border-radius: 25px;
+        padding: 8px 15px;
+    }
+    
+    .message-form textarea {
+        flex: 1;
+        border: none;
+        background: transparent;
+        resize: none;
+        max-height: 120px;
+        padding: 8px 12px;
+    }
+    
+    .emoji-btn, .attachment-btn {
+        background: none;
+        border: none;
+        color: #666;
+        font-size: 1.2rem;
+        cursor: pointer;
+    }
+    
+    .btn-send {
+        background: #9743F4;
+        color: white;
+        border: none;
+        padding: 8px 20px;
+        border-radius: 20px;
+        margin-top: 10px;
+        float: right;
+    }
+    
+    /* Empty State */
+    .no-messages {
+        text-align: center;
+        padding: 40px 0;
+    }
+    
+    .empty-icon {
+        width: 100px;
+        opacity: 0.5;
+        margin-bottom: 15px;
+    }
+    
+    /* Typing Indicator */
+    .typing-indicator {
+        margin-bottom: 15px;
+    }
+    
+    .typing-dots span {
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        background: #ccc;
+        border-radius: 50%;
+        margin: 0 2px;
+        animation: typingAnimation 1.4s infinite ease-in-out;
+    }
+    
+    .typing-dots span:nth-child(2) {
+        animation-delay: 0.2s;
+    }
+    
+    .typing-dots span:nth-child(3) {
+        animation-delay: 0.4s;
+    }
+    
+    @keyframes typingAnimation {
+        0%, 60%, 100% { transform: translateY(0); }
+        30% { transform: translateY(-5px); }
+    }
+</style>
 {% endblock %}
 
 

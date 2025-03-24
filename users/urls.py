@@ -28,6 +28,9 @@ urlpatterns = [
     path('invite/', views.invite_view, name='invite_friends'),
     path('invite/generate/', views.generate_invite, name='generate_invite'),
     path('invite/send-email/', views.send_invite_email, name='send_invite_email'),
+
+    # other url patterns
+    path('about/', views.about_view, name='about'),
 ]
 
 

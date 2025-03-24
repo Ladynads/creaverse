@@ -355,6 +355,9 @@ def home_view(request):
         "now": timezone.now()
     })
 
+# ===== About View =====
+def about_view(request):
+    return render(request, 'about.html') 
 
 
 

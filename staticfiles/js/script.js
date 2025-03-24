@@ -1,281 +1,218 @@
-// Auto-dismiss flash messages after 5 seconds
-document.addEventListener("DOMContentLoaded", function () {
-    let messages = document.querySelectorAll(".flash-message");
-    messages.forEach(msg => {
+// ========================
+// CORE FUNCTIONALITY
+// ========================
+
+// Auto-dismiss flash messages
+document.addEventListener("DOMContentLoaded", function() {
+    // Django messages
+    document.querySelectorAll(".flash-message, ul.messages li").forEach(msg => {
         setTimeout(() => {
             msg.style.opacity = "0";
-            setTimeout(() => msg.remove(), 500); // Fully remove after fade-out
+            setTimeout(() => msg.remove(), 500);
         }, 5000);
     });
-
-    // Hide Django's default message box if still visible
-    let djangoMessages = document.querySelectorAll("ul.messages li");
-    djangoMessages.forEach(msg => msg.style.display = "none");
 });
 
-// Avatar Hover Effects 
-document.querySelectorAll('.creator-avatar').forEach(avatar => {
-    // Only add effects if it's an image avatar
-    if (avatar.querySelector('img')) {
-        avatar.addEventListener('mouseenter', () => {
-            avatar.style.transform = 'translateY(-5px)';
-            avatar.style.filter = 'drop-shadow(0 10px 8px rgba(151, 67, 244, 0.3))';
-            if (avatar.querySelector('img')) {
-                avatar.querySelector('img').style.transform = 'scale(1.05)';
+// ========================
+// MESSAGING SYSTEM
+// ========================
+
+// Real-time message updates
+let messagePollInterval;
+
+function setupMessagePolling() {
+    if (document.querySelector('.message-thread-container')) {
+        messagePollInterval = setInterval(checkNewMessages, 5000);
+        scrollToLatestMessage();
+    }
+}
+
+function checkNewMessages() {
+    const lastMessage = document.querySelector('.message-bubble:last-child');
+    if (!lastMessage) return;
+
+    fetch(`/messages/check_new/?last_id=${lastMessage.dataset.messageId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.new_messages?.length > 0) {
+                appendNewMessages(data.new_messages);
+            }
+        })
+        .catch(console.error);
+}
+
+function appendNewMessages(messages) {
+    const container = document.querySelector('.message-thread-container');
+    messages.forEach(msg => {
+        container.insertBefore(createMessageBubble(msg), container.querySelector('.message-form'));
+    });
+    scrollToLatestMessage();
+}
+
+function createMessageBubble(message) {
+    const bubble = document.createElement('div');
+    bubble.className = `message-bubble ${message.is_sender ? 'sent' : 'received'}`;
+    bubble.dataset.messageId = message.id;
+    bubble.innerHTML = `
+        <p>${message.content}</p>
+        <span class="message-time">${message.timestamp}</span>
+    `;
+    return bubble;
+}
+
+function scrollToLatestMessage() {
+    const messages = document.querySelectorAll('.message-bubble');
+    if (messages.length > 0) {
+        messages[messages.length - 1].scrollIntoView({ behavior: 'smooth', block: 'end' });
+    }
+}
+
+// Message search
+function setupMessageSearch() {
+    const searchInput = document.getElementById('message-search');
+    if (searchInput) {
+        searchInput.addEventListener('input', debounce(function() {
+            const term = this.value.toLowerCase();
+            document.querySelectorAll('.message-preview').forEach(el => {
+                el.style.display = el.textContent.toLowerCase().includes(term) ? 'flex' : 'none';
+            });
+        }, 300));
+    }
+}
+
+// ========================
+// PROFILE INTERACTIONS 
+// ========================
+
+// Follow button handler
+function setupFollowButtons() {
+    document.querySelectorAll('.follow-btn').forEach(btn => {
+        btn.addEventListener('click', async function(e) {
+            e.preventDefault();
+            
+            const button = this;
+            button.disabled = true;
+            button.style.transform = 'scale(0.95)';
+            
+            try {
+                const response = await fetch(button.dataset.followUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': button.dataset.csrf
+                    },
+                    body: JSON.stringify({ user_id: button.dataset.userId })
+                });
+                
+                const data = await response.json();
+                button.classList.toggle('following', data.is_following);
+                
+                button.innerHTML = data.is_following 
+                    ? '<span class="check">✓</span> Following' 
+                    : '+ Follow';
+                
+                button.style.backgroundColor = data.is_following 
+                    ? '#19A7CE' 
+                    : '#9743F4';
+                
+                if (typeof updateStats === 'function') updateStats();
+            } catch (error) {
+                console.error('Follow error:', error);
+            } finally {
+                button.style.transform = '';
+                button.disabled = false;
             }
         });
-        
+    });
+}
+
+// Like buttons
+function setupLikeButtons() {
+    document.querySelectorAll('.like-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            this.classList.toggle('liked');
+            if (this.classList.contains('liked')) {
+                this.innerHTML = '❤️ Liked';
+                this.style.backgroundColor = '#FF6B6B';
+            } else {
+                this.innerHTML = '🤍 Like';
+                this.style.backgroundColor = '#9743F4';
+            }
+        });
+    });
+}
+
+// ========================
+// UI COMPONENTS
+// ========================
+
+// Avatar hover effects
+function setupAvatarHovers() {
+    document.querySelectorAll('.creator-avatar').forEach(avatar => {
+        avatar.addEventListener('mouseenter', () => {
+            avatar.style.transform = 'scale(1.05)';
+            avatar.style.boxShadow = '0 0 15px rgba(151, 67, 244, 0.3)';
+        });
         avatar.addEventListener('mouseleave', () => {
             avatar.style.transform = '';
-            avatar.style.filter = '';
-            if (avatar.querySelector('img')) {
-                avatar.querySelector('img').style.transform = '';
-            }
+            avatar.style.boxShadow = '';
         });
-
-        // Click effect
-        avatar.addEventListener('click', () => {
-            avatar.style.transform = 'scale(0.95)';
-            setTimeout(() => {
-                avatar.style.transform = 'translateY(-5px)';
-            }, 100);
-        });
-    }
-});
-
-// Like Button Animation 
-document.querySelectorAll('.like-btn').forEach(button => {
-    button.addEventListener('click', () => {
-        button.classList.toggle('liked');
-        if (button.classList.contains('liked')) {
-            button.innerHTML = '❤️ Liked';
-            button.style.backgroundColor = '#FF6B6B';
-            button.style.transform = 'scale(1.1)';
-            setTimeout(() => {
-                button.style.transform = 'scale(1)';
-            }, 200);
-        } else {
-            button.innerHTML = '🤍 Like';
-            button.style.backgroundColor = '#9743F4';
-        }
     });
-});
+}
 
-// Premium Follow Button with HTMX Integration 
-document.querySelectorAll('.follow-btn').forEach(button => {
-    button.addEventListener('click', async function(e) {
-        e.preventDefault();
-        
-        this.style.transform = 'scale(0.95)';
-        this.style.opacity = '0.8';
-        
-        const userId = this.dataset.userId;
-        const followUrl = this.dataset.followUrl;
-        const csrfToken = this.dataset.csrf;
-        
-        try {
-            const response = await fetch(followUrl, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': csrfToken
-                },
-                body: JSON.stringify({ user_id: userId })
+// Tab system
+function setupProfileTabs() {
+    const tabs = document.querySelectorAll('.profile-tabs button');
+    if (tabs.length === 0) return;
+
+    tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            // Tab switching logic
+            const targetId = tab.dataset.target;
+            document.querySelectorAll('.tab-content').forEach(c => {
+                c.classList.toggle('active', c.id === targetId);
             });
             
-            if (response.ok) {
-                const data = await response.json();
-                
-                this.classList.toggle('following');
-                if (data.is_following) {
-                    this.innerHTML = '<span class="check">✓</span> Following';
-                    this.style.transform = 'scale(1.1)';
-                    setTimeout(() => {
-                        this.style.transform = 'scale(1)';
-                        this.style.opacity = '1';
-                    }, 200);
-                } else {
-                    this.innerHTML = '+ Follow';
-                    this.style.transform = 'scale(1)';
-                    this.style.opacity = '1';
-                }
-                
-                if (typeof updateStats === 'function') {
-                    updateStats();
-                }
-            }
-        } catch (error) {
-            console.error('Error:', error);
-            this.style.transform = 'scale(1)';
-            this.style.opacity = '1';
-        }
+            // Update active tab style
+            tabs.forEach(t => t.classList.toggle('tab-active', t === tab));
+        });
     });
-});
+    
+    // Activate first tab
+    tabs[0].click();
+}
 
-// Interactive Tab System 
+// ========================
+// UTILITIES
+// ========================
+
+function debounce(func, wait) {
+    let timeout;
+    return function() {
+        const context = this, args = arguments;
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func.apply(context, args), wait);
+    };
+}
+
+// ========================
+// INITIALIZATION
+// ========================
+
 document.addEventListener('DOMContentLoaded', function() {
-    const tabButtons = document.querySelectorAll('.profile-tabs button');
-    const tabContents = document.querySelectorAll('.tab-content');
+    // Core
+    setupMessageSearch();
+    setupMessagePolling();
     
-    tabButtons.forEach(button => {
-        button.addEventListener('click', () => {
-            tabButtons.forEach(btn => btn.classList.remove('tab-active'));
-            tabContents.forEach(content => content.classList.remove('active'));
-            
-            button.classList.add('tab-active');
-            const targetId = button.dataset.target;
-            document.getElementById(targetId).classList.add('active');
-            
-            if (document.getElementById(targetId).innerHTML.trim() === '') {
-                loadTabContent(targetId);
-            }
-        });
-    });
+    // Profile
+    setupFollowButtons();
+    setupLikeButtons();
+    setupAvatarHovers();
+    setupProfileTabs();
     
-    if (tabButtons.length > 0) {
-        tabButtons[0].click();
-    }
-});
-
-function loadTabContent(tabId) {
-    const username = document.querySelector('.username').textContent;
-    const url = `/profile/${username}/${tabId}/`;
-    
-    const tabContent = document.getElementById(tabId);
-    tabContent.innerHTML = '<div class="loading-spinner"></div>';
-    
-    htmx.ajax('GET', url, `#${tabId}`)
-        .then(() => {
-            if (tabId === 'likes') {
-                initLikeButtons();
-            }
-        });
-}
-
-// Follow Button Animation 
-document.querySelectorAll('.btn-follow').forEach(button => {
-    button.addEventListener('click', () => {
-        if (button.textContent === 'Follow') {
-            button.textContent = 'Unfollow';
-            button.style.backgroundColor = '#FF6B6B';
-            button.style.transform = 'scale(1.1)';
-            setTimeout(() => {
-                button.style.transform = 'scale(1)';
-            }, 200);
-        } else {
-            button.textContent = 'Follow';
-            button.style.backgroundColor = '#19A7CE';
-        }
+    // Cleanup on page change
+    document.addEventListener('turbo:before-cache', function() {
+        clearInterval(messagePollInterval);
     });
 });
 
-// Hover Effects for Profile Picture 
-document.querySelectorAll('.creator-avatar').forEach(picture => {
-    picture.addEventListener('mouseenter', () => {
-        picture.style.transform = 'scale(1.05)';
-        picture.style.boxShadow = '0 0 15px rgba(151, 67, 244, 0.5)';
-    });
-    picture.addEventListener('mouseleave', () => {
-        picture.style.transform = 'scale(1)';
-        picture.style.boxShadow = 'none';
-    });
-});
-
-// Smooth Scroll for Anchor Links 
-document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-    anchor.addEventListener('click', function (e) {
-        e.preventDefault();
-        document.querySelector(this.getAttribute('href')).scrollIntoView({
-            behavior: 'smooth'
-        });
-    });
-});
-
-// Lazy Loading for Images 
-document.addEventListener('DOMContentLoaded', function () {
-    let lazyImages = document.querySelectorAll('img.lazy');
-    lazyImages.forEach(img => {
-        img.src = img.dataset.src;
-        img.classList.remove('lazy');
-    });
-});
-
-// Stats Updater for HTMX 
-function updateStats() {
-    const username = document.querySelector('.username').textContent;
-    htmx.ajax('GET', `/profile/${username}/stats/`, '.stats-ticker');
-}
-
-// Initialize Like Buttons in Dynamic Content 
-function initLikeButtons() {
-    document.querySelectorAll('.like-btn').forEach(button => {
-        button.addEventListener('click', () => {
-            button.classList.toggle('liked');
-            if (button.classList.contains('liked')) {
-                button.innerHTML = '❤️ Liked';
-                button.style.backgroundColor = '#FF6B6B';
-                button.style.transform = 'scale(1.1)';
-                setTimeout(() => {
-                    button.style.transform = 'scale(1)';
-                }, 200);
-            } else {
-                button.innerHTML = '🤍 Like';
-                button.style.backgroundColor = '#9743F4';
-            }
-        });
-    });
-}
-
-// Engagement Score Animation 
-function animateEngagementScore() {
-    const progressBar = document.querySelector('.progress-bar');
-    if (progressBar) {
-        const targetWidth = progressBar.style.getPropertyValue('--progress');
-        progressBar.style.width = '0';
-        setTimeout(() => {
-            progressBar.style.width = targetWidth;
-        }, 100);
-    }
-}
-
-// Initialize everything when DOM loads 
-document.addEventListener('DOMContentLoaded', function() {
-    animateEngagementScore();
-    
-    if (document.querySelector('.follow-btn')) {
-        document.querySelectorAll('.follow-btn').forEach(btn => {
-            btn.addEventListener('click', followHandler);
-        });
-    }
-    
-    initTooltips();
-});
-
-// Tooltip System 
-function initTooltips() {
-    const tooltips = document.querySelectorAll('[data-tooltip]');
-    
-    tooltips.forEach(el => {
-        el.addEventListener('mouseenter', showTooltip);
-        el.addEventListener('mouseleave', hideTooltip);
-    });
-    
-    function showTooltip(e) {
-        const tooltipText = this.getAttribute('data-tooltip');
-        const tooltip = document.createElement('div');
-        tooltip.className = 'tooltip';
-        tooltip.textContent = tooltipText;
-        document.body.appendChild(tooltip);
-        
-        const rect = this.getBoundingClientRect();
-        tooltip.style.left = `${rect.left + rect.width/2 - tooltip.offsetWidth/2}px`;
-        tooltip.style.top = `${rect.top - tooltip.offsetHeight - 5}px`;
-    }
-    
-    function hideTooltip() {
-        const tooltip = document.querySelector('.tooltip');
-        if (tooltip) {
-            tooltip.remove();
-        }
-    }
-}
