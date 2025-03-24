@@ -11,9 +11,12 @@ urlpatterns = [
     path('profile/<str:username>/', views.profile_view, name='profile'),
     path('profile/edit/', views.profile_edit, name='profile_edit'),
     
+    # HTMX Profile Endpoints
+    path('profile/<str:username>/stats/', views.user_stats_view, name='user_stats'),
+    path('profile/<str:username>/<str:tab_name>/', views.profile_tab_content, name='profile_tab'),
+    
     # Following
-    path('profile/<str:username>/follow/', views.follow_user, name='follow_user'),
-    path('profile/<str:username>/unfollow/', views.unfollow_user, name='unfollow_user'),
+    path('profile/<str:username>/follow/', views.follow_toggle, name='follow_toggle'),
     
     # Messaging
     path('messages/', views.message_list, name='message_list'),

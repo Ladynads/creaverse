@@ -4,9 +4,8 @@ from django.http import JsonResponse
 from django.db.models import Count, Q, F, Value, IntegerField, Case, When
 from django.utils.timezone import now
 import datetime
-from feed.models import Post
+from feed.models import Post, Like
 from .models import Comment   
-
 
 # ✅ AI-Powered Feed View
 @login_required
@@ -15,7 +14,7 @@ def feed_view(request):
 
     # ✅ Fetch user interactions (posts they liked or commented on)
     user_interactions = Post.objects.filter(
-        Q(likes=request.user) | Q(comments__user=request.user)
+        Q(likes__user=request.user) | Q(comments__user=request.user)  # Fixed: Changed likes= to likes__user=
     ).distinct()
 
     # ✅ Extract keywords from interacted posts
@@ -46,7 +45,7 @@ def feed_view(request):
     # ✅ Personalization: Boost posts that user has interacted with
     personalized_posts = Post.objects.annotate(
         interacted=Case(
-            When(likes=request.user, then=Value(1)),
+            When(likes__user=request.user, then=Value(1)),  # Fixed: Changed likes= to likes__user=
             When(comments__user=request.user, then=Value(1)),
             default=Value(0),
             output_field=IntegerField(),
@@ -92,10 +91,9 @@ def post_detail_view(request, post_id):
 def like_post(request, post_id):
     """Allows users to like or unlike a post."""
     post = get_object_or_404(Post, id=post_id)
-    if request.user in post.likes.all():
-        post.likes.remove(request.user)
-    else:
-        post.likes.add(request.user)
+    like, created = Like.objects.get_or_create(user=request.user, post=post)
+    if not created:
+        like.delete()
     return redirect('feed')
 
 

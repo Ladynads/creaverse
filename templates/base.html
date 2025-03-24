@@ -6,48 +6,73 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CreatorVerse</title>
+    
+    <!-- Core CSS -->
     <link rel="stylesheet" href="{% static 'css/styles.css' %}">
-    <!-- Add Google Fonts for modern typography -->
+    <link rel="stylesheet" href="{% static 'css/profile.css' %}">
+    
+    <!-- Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
+    
+    <!-- Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- HTMX for dynamic loading -->
+    <script src="https://unpkg.com/htmx.org@1.9.6"></script>
+    
+    <!-- Preload critical resources -->
+    <link rel="preload" href="{% static 'js/script.js' %}" as="script">
+    <link rel="preload" href="{% static 'js/profile.js' %}" as="script">
 </head>
 <body>
-    <!-- ✅ Flash Messages (Pop-up Style) -->
+    <!-- Flash Messages (Pop-up Style) -->
     {% if messages %}
         <div class="flash-messages">
             {% for message in messages %}
                 <div class="flash-message {{ message.tags }}">
                     {{ message }}
+                    <span class="close-flash">&times;</span>
                 </div>
             {% endfor %}
         </div>
     {% endif %}
 
-    <!-- ✅ Navigation Bar -->
+    <!-- Navigation Bar -->
     <header class="header">
         <nav class="navbar">
             <a href="{% url 'home' %}" class="logo">CreatorVerse</a>
             <ul class="nav-links">
                 {% if user.is_authenticated %}
-                    <li><a href="{% url 'feed' %}">Feed</a></li>
-                    <li><a href="{% url 'profile' username=request.user.username %}">Profile</a></li>
-                    <li><a href="{% url 'invite_friends' %}">Invite Friends</a></li>
+                    <li><a href="{% url 'feed' %}"><i class="fas fa-home"></i> Feed</a></li>
+                    <li>
+                        <a href="{% url 'profile' username=request.user.username %}">
+                            <i class="fas fa-user"></i> Profile
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{% url 'invite_friends' %}">
+                            <i class="fas fa-envelope"></i> Invite
+                        </a>
+                    </li>
                     <li>
                         <a href="{% url 'message_list' %}">
-                            Messages
+                            <i class="fas fa-comments"></i> Messages
                             {% if unread_count and unread_count > 0 %}
-                                <span class="badge">{{ unread_count }}</span>  <!-- 🔴 Unread Messages Badge -->
+                                <span class="badge">{{ unread_count }}</span>
                             {% endif %}
                         </a>
                     </li>
                     <li>
                         <form id="logout-form" action="{% url 'logout' %}" method="post" style="display: inline;">
                             {% csrf_token %}
-                            <button type="submit" class="btn-logout">Log Out</button>
+                            <button type="submit" class="btn-logout">
+                                <i class="fas fa-sign-out-alt"></i> Log Out
+                            </button>
                         </form>
                     </li>
                 {% else %}
-                    <li><a href="{% url 'login' %}">Log In</a></li>
-                    <li><a href="{% url 'register' %}">Sign Up</a></li>
+                    <li><a href="{% url 'login' %}"><i class="fas fa-sign-in-alt"></i> Log In</a></li>
+                    <li><a href="{% url 'register' %}"><i class="fas fa-user-plus"></i> Sign Up</a></li>
                 {% endif %}
             </ul>
         </nav>
@@ -57,13 +82,30 @@
         {% block content %}{% endblock %}
     </main>
 
-    <!-- ✅ Footer -->
+    <!-- Footer -->
     <footer class="footer">
-        <p>&copy; 2025 CreatorVerse. All rights reserved.</p>
+        <div class="footer-content">
+            <p>&copy; 2025 CreatorVerse. All rights reserved.</p>
+            <div class="social-links">
+                <a href="#"><i class="fab fa-twitter"></i></a>
+                <a href="#"><i class="fab fa-instagram"></i></a>
+                <a href="#"><i class="fab fa-discord"></i></a>
+            </div>
+        </div>
     </footer>
 
-    <!-- ✅ Global JavaScript File -->
+    <!-- JavaScript Files -->
     <script src="{% static 'js/script.js' %}" defer></script>
+    
+    {% block js %}
+        <!-- Profile-specific JS will be loaded here for profile pages -->
+        <script src="{% static 'js/profile.js' %}" defer></script>
+    {% endblock %}
+    
+    <!-- Loading Spinner (hidden by default) -->
+    <div id="loading-spinner" class="loading-spinner" style="display: none;">
+        <div class="spinner"></div>
+    </div>
 </body>
 </html>
 
