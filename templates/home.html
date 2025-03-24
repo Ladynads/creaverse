@@ -25,18 +25,32 @@
             {% endif %}
         </div>
     </div>
-    
-    <div class="hero-image">
-        <img src="{% static 'images/hero-illustration.jpeg' %}" alt="Creators collaborating" class="hero-illustration">
-    </div>
 </section>
 
+<!-- About Section -->
+<section class="about-section">
+    <h2>Why CreatorVerse?</h2>
+    <p>CreatorVerse is the perfect platform for creators to connect, collaborate, and share their work. Whether you're an artist, developer, photographer, or content creator, you’ll find like-minded collaborators and endless inspiration.</p>
+    <a href="{% url 'about' %}" class="btn btn-primary">Learn More</a>
+</section>
+
+<!-- Features Section -->
+<section class="features-section">
+    <h2>Platform Features</h2>
+    <ul>
+        <li><i class="fas fa-users"></i> Connect with Creators</li>
+        <li><i class="fas fa-image"></i> Share Your Work</li>
+        <li><i class="fas fa-cogs"></i> Collaboration Tools</li>
+        <li><i class="fas fa-search"></i> Discover Endless Inspiration</li>
+    </ul>
+</section>
+
+<!-- Featured Creators Section - Carousel -->
 <section class="featured-section">
     <h2 class="section-title"><i class="fas fa-star"></i> Featured Creators</h2>
-    <div class="featured-grid">
+    <div class="featured-carousel">
         {% for creator in featured_creators %}
-        <div class="creator-card" 
-             style="border-top: 3px solid {% cycle '#9743F4' '#19A7CE' '#FF6B6B' '#6BCB77' '#FFD93D' %};">
+        <div class="creator-card">
             <div class="creator-avatar">
                 {% if creator.profile_image %}
                 <img src="{{ creator.profile_image.url }}" alt="{{ creator.username }}'s profile picture">
@@ -71,20 +85,29 @@
     </div>
 </section>
 
+<!-- Testimonials Section - Enhanced with Carousel -->
 <section class="testimonials">
     <h2 class="section-title"><i class="fas fa-quote-left"></i> What Our Creators Say</h2>
     <div class="testimonial-carousel">
         <div class="testimonial">
+            <img src="{% static 'images/testimonial-1.jpg' %}" alt="Maya" class="testimonial-avatar">
             <p>"This platform transformed my creative workflow!"</p>
-            <div class="author">- Maya, Digital Artist</div>
+            <div class="author">- James, Digital Artist</div>
         </div>
         <div class="testimonial">
+            <img src="{% static 'images/testimonial-2.jpg' %}" alt="James" class="testimonial-avatar">
             <p>"Found my best collaborators here."</p>
-            <div class="author">- James, Photographer</div>
+            <div class="author">- Maya, Photographer</div>
+        </div>
+        <div class="testimonial">
+            <img src="{% static 'images/testimonial-3.jpg' %}" alt="Anna" class="testimonial-avatar">
+            <p>"CreatorVerse has given me the tools to take my projects to the next level."</p>
+            <div class="author">- Anna, Graphic Designer</div>
         </div>
     </div>
 </section>
 {% endblock %}
+
 
 
 

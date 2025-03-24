@@ -13,7 +13,7 @@ document.addEventListener("DOMContentLoaded", function () {
     djangoMessages.forEach(msg => msg.style.display = "none");
 });
 
-// Avatar Hover Effects 
+// Avatar Hover Effects
 document.querySelectorAll('.creator-avatar').forEach(avatar => {
     // Only add effects if it's an image avatar
     if (avatar.querySelector('img')) {
@@ -43,7 +43,7 @@ document.querySelectorAll('.creator-avatar').forEach(avatar => {
     }
 });
 
-// Like Button Animation 
+// Like Button Animation
 document.querySelectorAll('.like-btn').forEach(button => {
     button.addEventListener('click', () => {
         button.classList.toggle('liked');
@@ -61,7 +61,7 @@ document.querySelectorAll('.like-btn').forEach(button => {
     });
 });
 
-// Premium Follow Button with HTMX Integration 
+// Premium Follow Button with HTMX Integration
 document.querySelectorAll('.follow-btn').forEach(button => {
     button.addEventListener('click', async function(e) {
         e.preventDefault();
@@ -112,7 +112,38 @@ document.querySelectorAll('.follow-btn').forEach(button => {
     });
 });
 
-// Interactive Tab System 
+// Featured Creators Carousel (Enhanced)
+document.addEventListener('DOMContentLoaded', function() {
+    const carousel = document.querySelector('.featured-carousel');
+    let currentIndex = 0;
+    const creators = document.querySelectorAll('.creator-card');
+    const totalCreators = creators.length;
+    
+    function showCreator(index) {
+        creators.forEach((creator, i) => {
+            creator.style.display = (i === index) ? 'block' : 'none';
+        });
+    }
+    
+    function nextCreator() {
+        currentIndex = (currentIndex + 1) % totalCreators;
+        showCreator(currentIndex);
+    }
+
+    function prevCreator() {
+        currentIndex = (currentIndex - 1 + totalCreators) % totalCreators;
+        showCreator(currentIndex);
+    }
+    
+    // Next and Prev buttons functionality
+    document.querySelector('.next-btn').addEventListener('click', nextCreator);
+    document.querySelector('.prev-btn').addEventListener('click', prevCreator);
+    
+    // Initialize by showing the first creator
+    showCreator(currentIndex);
+});
+
+// Interactive Tab System
 document.addEventListener('DOMContentLoaded', function() {
     const tabButtons = document.querySelectorAll('.profile-tabs button');
     const tabContents = document.querySelectorAll('.tab-content');
@@ -152,24 +183,7 @@ function loadTabContent(tabId) {
         });
 }
 
-// Follow Button Animation 
-document.querySelectorAll('.btn-follow').forEach(button => {
-    button.addEventListener('click', () => {
-        if (button.textContent === 'Follow') {
-            button.textContent = 'Unfollow';
-            button.style.backgroundColor = '#FF6B6B';
-            button.style.transform = 'scale(1.1)';
-            setTimeout(() => {
-                button.style.transform = 'scale(1)';
-            }, 200);
-        } else {
-            button.textContent = 'Follow';
-            button.style.backgroundColor = '#19A7CE';
-        }
-    });
-});
-
-// Hover Effects for Profile Picture 
+// Hover Effects for Profile Picture
 document.querySelectorAll('.creator-avatar').forEach(picture => {
     picture.addEventListener('mouseenter', () => {
         picture.style.transform = 'scale(1.05)';
@@ -181,7 +195,7 @@ document.querySelectorAll('.creator-avatar').forEach(picture => {
     });
 });
 
-// Smooth Scroll for Anchor Links 
+// Smooth Scroll for Anchor Links
 document.querySelectorAll('a[href^="#"]').forEach(anchor => {
     anchor.addEventListener('click', function (e) {
         e.preventDefault();
@@ -191,7 +205,7 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
     });
 });
 
-// Lazy Loading for Images 
+// Lazy Loading for Images
 document.addEventListener('DOMContentLoaded', function () {
     let lazyImages = document.querySelectorAll('img.lazy');
     lazyImages.forEach(img => {
@@ -200,13 +214,13 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 });
 
-// Stats Updater for HTMX 
+// Stats Updater for HTMX
 function updateStats() {
     const username = document.querySelector('.username').textContent;
     htmx.ajax('GET', `/profile/${username}/stats/`, '.stats-ticker');
 }
 
-// Initialize Like Buttons in Dynamic Content 
+// Initialize Like Buttons in Dynamic Content
 function initLikeButtons() {
     document.querySelectorAll('.like-btn').forEach(button => {
         button.addEventListener('click', () => {
@@ -226,7 +240,7 @@ function initLikeButtons() {
     });
 }
 
-// Engagement Score Animation 
+// Engagement Score Animation
 function animateEngagementScore() {
     const progressBar = document.querySelector('.progress-bar');
     if (progressBar) {
@@ -238,7 +252,7 @@ function animateEngagementScore() {
     }
 }
 
-// Initialize everything when DOM loads 
+// Initialize everything when DOM loads
 document.addEventListener('DOMContentLoaded', function() {
     animateEngagementScore();
     
@@ -251,7 +265,7 @@ document.addEventListener('DOMContentLoaded', function() {
     initTooltips();
 });
 
-// Tooltip System 
+// Tooltip System
 function initTooltips() {
     const tooltips = document.querySelectorAll('[data-tooltip]');
     
@@ -279,3 +293,4 @@ function initTooltips() {
         }
     }
 }
+
