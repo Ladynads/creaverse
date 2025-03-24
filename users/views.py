@@ -70,7 +70,7 @@ class CustomLogoutView(LogoutView):
         messages.info(request, "You have been logged out.")
         return redirect(self.next_page)
 
-# Profile View
+# Profile View (for the current user)
 @login_required
 def profile_view(request, username):
     profile_user = get_object_or_404(User, username=username)
@@ -83,7 +83,19 @@ def profile_view(request, username):
         'following_count': profile_user.following.count(),
         'is_following': request.user.following.filter(id=profile_user.id).exists(),
     }
-    return render(request, 'profile.html', context)
+    return render(request, 'users/profile.html', context)
+
+# View for other users' profiles
+@login_required
+def user_profile(request, username):
+    """Allows viewing another user's profile & their posts."""
+    profile_user = get_object_or_404(CustomUser, username=username)
+    user_posts = Post.objects.filter(user=profile_user).order_by('-created_at')
+
+    return render(request, 'users/user_profile.html', {
+        'profile_user': profile_user,
+        'user_posts': user_posts,
+    })
 
 # Edit Profile
 @login_required
@@ -258,6 +270,7 @@ def delete_message(request, message_id):
 def feed_view(request):
     posts = Post.objects.all().order_by('-created_at')
     return render(request, 'feed/feed.html', {'posts': posts})
+
 
 
 

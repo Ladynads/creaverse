@@ -154,14 +154,6 @@ class UserInteraction(models.Model):
         ('SHARE', 'Share')
     ]
 
-class UserInteraction(models.Model):
-    INTERACTION_TYPES = [
-        ('LIKE', 'Like'),
-        ('COMMENT', 'Comment'),
-        ('VIEW', 'View'),
-        ('SHARE', 'Share')
-    ]
-
     user = models.ForeignKey(
         CustomUser,
         on_delete=models.CASCADE,
@@ -175,7 +167,7 @@ class UserInteraction(models.Model):
     interaction_type = models.CharField(
         max_length=10,
         choices=INTERACTION_TYPES,
-        default='VIEW'  # Provide a default value here
+        default='VIEW'
     )
     timestamp = models.DateTimeField(auto_now_add=True)
 
