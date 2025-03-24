@@ -11,9 +11,6 @@ urlpatterns = [
     path('profile/<str:username>/', views.profile_view, name='profile'),
     path('profile/edit/', views.profile_edit, name='profile_edit'),
     
-    # Viewing another user's profile
-    path('user/<str:username>/', views.user_profile, name='user_profile'),
-    
     # Following
     path('profile/<str:username>/follow/', views.follow_user, name='follow_user'),
     path('profile/<str:username>/unfollow/', views.unfollow_user, name='unfollow_user'),
@@ -29,6 +26,7 @@ urlpatterns = [
     path('invite/generate/', views.generate_invite, name='generate_invite'),
     path('invite/send-email/', views.send_invite_email, name='send_invite_email'),
 ]
+
 
 
 

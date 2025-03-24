@@ -1,67 +1,88 @@
+# users/views.py
 from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth import login, logout
+from django.contrib.auth import login, logout, get_user_model
 from django.contrib.auth.views import LoginView, LogoutView
 from django.urls import reverse_lazy
 from django.contrib.auth.decorators import login_required
+from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib import messages
 from django.http import JsonResponse
+from django.views.decorators.http import require_http_methods
 from django.views.decorators.csrf import csrf_protect
 from django.core.mail import send_mail
 from django.core.paginator import Paginator
 from django.conf import settings
-from django.db.models import Q
+from django.db.models import Q, Count
+from django.utils import timezone
 from .forms import CustomUserCreationForm, MessageForm, ProfileEditForm
-from .models import CustomUser, InviteCode, Message
-from feed.models import Post
+from .models import CustomUser, InviteCode, Message, UserInteraction
+from feed.models import Post, Like, Comment
 
-# User model
-from django.contrib.auth import get_user_model
-User = get_user_model()
+User = get_user_model()  
 
-# Invite-Only User Registration View
+
+# HTMX Views
+
+@login_required
+@require_http_methods(["GET"])
+def user_stats_view(request, username):
+    """HTMX endpoint for live user stats"""
+    user = get_object_or_404(User, username=username)
+    return JsonResponse({
+        'post_count': Post.objects.filter(user=user).count(),
+        'follower_count': user.followers.count(),
+        'following_count': user.following.count()
+    })
+
+@login_required
+def profile_tab_content(request, username, tab_name):
+    """HTMX endpoint for tabbed content"""
+    profile_user = get_object_or_404(User, username=username)
+    
+    if tab_name == 'likes':
+        posts = Post.objects.filter(likes__user=profile_user).distinct()
+        template = 'users/partials/likes_tab.html'
+    elif tab_name == 'saved' and profile_user == request.user:
+        posts = Post.objects.filter(saved_by=profile_user)
+        template = 'users/partials/saved_tab.html'
+    elif tab_name == 'drafts' and profile_user == request.user:
+        posts = Post.objects.filter(user=profile_user, is_draft=True)
+        template = 'users/partials/drafts_tab.html'
+    else:
+        posts = Post.objects.filter(user=profile_user)
+        template = 'users/partials/posts_tab.html'
+
+    return render(request, template, {
+        'profile_user': profile_user,
+        'posts': posts.order_by('-created_at')
+    })
+
+
+# Authentication Views
+
 def register(request):
-    """Handles user registration with invite code verification."""
+    """Invite-only registration with optimized queries"""
     if request.method == "POST":
         form = CustomUserCreationForm(request.POST, request.FILES)
         invite_code = request.POST.get("invite_code")
 
         if form.is_valid():
-            try:
-                invite = InviteCode.objects.get(code=invite_code, used_by__isnull=True)
-            except InviteCode.DoesNotExist:
-                return render(request, 'users/register.html', {
-                    'form': form, 
-                    'error': "Invalid or used invite code!"
-                })
-
+            invite = get_object_or_404(
+                InviteCode.objects.select_related('created_by'),
+                code=invite_code, 
+                used_by__isnull=True
+            )
             user = form.save()
             invite.mark_used(user)
             login(request, user)
-            messages.success(request, "Registration successful! Welcome to CreatorVerse.")
-            return redirect('feed')
+            return JsonResponse({'success': True})
 
-    else:
-        form = CustomUserCreationForm()
+    return render(request, 'users/register.html', {'form': form or CustomUserCreationForm()})
 
-    return render(request, 'users/register.html', {'form': form})
-
-# Home View
-def home_view(request):
-    unread_count = 0
-    if request.user.is_authenticated:
-        unread_count = Message.objects.filter(
-            receiver=request.user, 
-            is_read=False
-        ).count()
-    
-    return render(request, "home.html", {"unread_count": unread_count})
-
-# Login View
 class CustomLoginView(LoginView):
     template_name = 'users/login.html'
     redirect_authenticated_user = True
 
-# Logout View
 class CustomLogoutView(LogoutView):
     next_page = reverse_lazy('home')
 
@@ -70,58 +91,114 @@ class CustomLogoutView(LogoutView):
         messages.info(request, "You have been logged out.")
         return redirect(self.next_page)
 
-# Profile View (for the current user)
+
+# Profile Views
+
 @login_required
 def profile_view(request, username):
-    profile_user = get_object_or_404(User, username=username)
-    user_posts = Post.objects.filter(user=profile_user).order_by('-created_at')
+    profile_user = get_object_or_404(
+        User.objects.select_related('profile'),
+        username=username
+    )
+    
+    base_posts = Post.objects.filter(user=profile_user)
     
     context = {
         'profile_user': profile_user,
-        'user_posts': user_posts,
+        'user_posts': base_posts.order_by('-created_at'),
+        'interactions': UserInteraction.objects.filter(
+            user=profile_user
+        ).select_related('post')[:5],
         'followers_count': profile_user.followers.count(),
         'following_count': profile_user.following.count(),
         'is_following': request.user.following.filter(id=profile_user.id).exists(),
+        'is_online': profile_user.last_seen > timezone.now() - timezone.timedelta(minutes=15),
+        'engagement_score': min(100, (
+            (base_posts.count() * 2) + 
+            (Like.objects.filter(post__user=profile_user).count() * 3) +
+            (profile_user.followers.count() * 5)
+        ) // 2),
     }
     return render(request, 'users/profile.html', context)
 
-# View for other users' profiles
-@login_required
-def user_profile(request, username):
-    """Allows viewing another user's profile & their posts."""
-    profile_user = get_object_or_404(CustomUser, username=username)
-    user_posts = Post.objects.filter(user=profile_user).order_by('-created_at')
-
-    return render(request, 'users/user_profile.html', {
-        'profile_user': profile_user,
-        'user_posts': user_posts,
-    })
-
-# Edit Profile
 @login_required
 def profile_edit(request):
     if request.method == "POST":
         form = ProfileEditForm(request.POST, request.FILES, instance=request.user)
         if form.is_valid():
-            form.save()
+            user = form.save()
             messages.success(request, "Profile updated successfully!")
-            return redirect('profile', username=request.user.username)
+            return redirect('profile', username=user.username)
     else:
         form = ProfileEditForm(instance=request.user)
     
-    return render(request, 'users/profile_edit.html', {'form': form})
+    return render(request, 'users/profile_edit.html', {
+        'form': form,
+        'social_links': getattr(request.user, 'social_links', {})
+    })
 
-# Invite Friends System
+
+# Social Interaction Views
+
+@login_required
+@require_http_methods(["POST"])
+def follow_user(request, username):
+    if request.user.username == username:
+        return JsonResponse({'success': False, 'error': "Cannot follow yourself!"})
+        
+    user_to_follow = get_object_or_404(User, username=username)
+    request.user.following.add(user_to_follow)
+    
+    UserInteraction.objects.create(
+        user=request.user,
+        target_user=user_to_follow,
+        interaction_type='FOLLOW'
+    )
+    
+    return JsonResponse({
+        'success': True,
+        'is_following': True,
+        'follower_count': user_to_follow.followers.count()
+    })
+
+@login_required
+@require_http_methods(["POST"])
+def unfollow_user(request, username):
+    user_to_unfollow = get_object_or_404(User, username=username)
+    request.user.following.remove(user_to_unfollow)
+    return JsonResponse({
+        'success': True,
+        'is_following': False,
+        'follower_count': user_to_unfollow.followers.count()
+    })
+
+@login_required
+def update_social_links(request):
+    if request.method == "POST":
+        request.user.social_links = {
+            'twitter': request.POST.get('twitter', '').strip(),
+            'instagram': request.POST.get('instagram', '').strip(),
+            'website': request.POST.get('website', '').strip()
+        }
+        request.user.save()
+        return JsonResponse({'success': True})
+    return JsonResponse({'success': False})
+
+
+# Invite System Views
+
 @login_required
 def invite_view(request):
-    """Shows user's invite codes."""
-    invite_codes = InviteCode.objects.filter(created_by=request.user)
-    return render(request, "users/invite.html", {"invite_codes": invite_codes})
+    invite_codes = InviteCode.objects.filter(
+        created_by=request.user
+    ).select_related('used_by')
+    return render(request, "users/invite.html", {
+        "invite_codes": invite_codes
+    })
 
 @login_required
 @csrf_protect
 def send_invite_email(request):
-    """Handles sending an invite code via email."""
     if request.method == "POST":
         email = request.POST.get('email')
         code = request.POST.get('code')
@@ -129,27 +206,23 @@ def send_invite_email(request):
         if email and code:
             try:
                 send_mail(
-                    "You're Invited to Join CreatorVerse!",
-                    f"Hey! You've been invited to join CreatorVerse.\n\n"
-                    f"Use this invite code: {code}\n\n"
-                    f"Sign up here: {settings.SITE_URL}/register/",
+                    "You're Invited!",
+                    f"Use code: {code}\nSign up: {settings.SITE_URL}/register/",
                     settings.DEFAULT_FROM_EMAIL,
                     [email],
                     fail_silently=False,
                 )
-                return JsonResponse({'success': True, 'message': 'Invite sent successfully!'})
+                return JsonResponse({'success': True})
             except Exception as e:
-                return JsonResponse({'success': False, 'message': str(e)})
+                return JsonResponse({'success': False, 'error': str(e)})
+    return JsonResponse({'success': False, 'error': 'Invalid request'})
 
-    return JsonResponse({'success': False, 'message': 'Invalid request!'})
-
-# Generate Invite Code
 @login_required
 def generate_invite(request):
     if InviteCode.objects.filter(created_by=request.user).count() >= 5:
         return JsonResponse({
             "success": False, 
-            "error": "Invite limit reached (max 5)!"
+            "error": "Maximum 5 invites!"
         })
 
     new_code = InviteCode.objects.create(created_by=request.user)
@@ -158,55 +231,26 @@ def generate_invite(request):
         "code": new_code.code
     })
 
-# Follow/Unfollow User
-@login_required
-def follow_user(request, username):
-    if request.user.username == username:
-        messages.error(request, "You cannot follow yourself!")
-        return redirect('profile', username=username)
-        
-    user_to_follow = get_object_or_404(User, username=username)
-    request.user.following.add(user_to_follow)
-    messages.success(request, f"You are now following {username}!")
-    return redirect('profile', username=username)
 
-@login_required
-def unfollow_user(request, username):
-    user_to_unfollow = get_object_or_404(User, username=username)
-    request.user.following.remove(user_to_unfollow)
-    messages.success(request, f"You have unfollowed {username}.")
-    return redirect('profile', username=username)
+# Messaging Views
 
-# Private Messaging System
 @login_required
 def message_list(request):
-    """View to show received and sent messages."""
-    received_messages = Message.objects.filter(
-        receiver=request.user
-    ).select_related("sender").order_by('-created_at')
+    messages = Message.objects.filter(
+        Q(receiver=request.user) | Q(sender=request.user)
+    ).select_related('sender', 'receiver').order_by('-created_at')
     
-    sent_messages = Message.objects.filter(
-        sender=request.user
-    ).select_related("receiver").order_by('-created_at')
-
-    # Pagination
-    received_paginator = Paginator(received_messages, 10)
-    received_page = request.GET.get('received_page')
-    received_messages = received_paginator.get_page(received_page)
-
-    sent_paginator = Paginator(sent_messages, 10)
-    sent_page = request.GET.get('sent_page')
-    sent_messages = sent_paginator.get_page(sent_page)
-
+    paginator = Paginator(messages, 10)
+    page = request.GET.get('page')
+    messages = paginator.get_page(page)
+    
     return render(request, "users/message_list.html", {
-        "received_messages": received_messages,
-        "sent_messages": sent_messages
+        "messages": messages
     })
 
 @login_required
 def send_message(request, user_id):
-    """Send a private message to another user."""
-    receiver = get_object_or_404(CustomUser, id=user_id)
+    receiver = get_object_or_404(User, id=user_id)
 
     if request.method == "POST":
         form = MessageForm(request.POST)
@@ -215,8 +259,7 @@ def send_message(request, user_id):
             message.sender = request.user
             message.receiver = receiver
             message.save()
-            messages.success(request, f"Message sent to {receiver.username}!")
-            return redirect("message_thread", receiver_id=receiver.id)
+            return JsonResponse({'success': True})
     else:
         form = MessageForm()
 
@@ -227,9 +270,8 @@ def send_message(request, user_id):
 
 @login_required
 def message_thread(request, receiver_id):
-    """Message conversation thread between two users."""
-    receiver = get_object_or_404(CustomUser, id=receiver_id)
-    messages_thread = Message.objects.filter(
+    receiver = get_object_or_404(User, id=receiver_id)
+    messages = Message.objects.filter(
         Q(sender=request.user, receiver=receiver) |
         Q(sender=receiver, receiver=request.user)
     ).order_by("created_at")
@@ -241,35 +283,53 @@ def message_thread(request, receiver_id):
             message.sender = request.user
             message.receiver = receiver
             message.save()
-            messages.success(request, "Reply sent!")
-            return redirect("message_thread", receiver_id=receiver.id)
+            return JsonResponse({'success': True})
     else:
         form = MessageForm()
 
     return render(request, "users/message_thread.html", {
         "receiver": receiver,
-        "messages": messages_thread,
+        "messages": messages,
         "form": form
     })
 
-# Delete Message
 @login_required
 def delete_message(request, message_id):
-    """Delete a message (for sender or receiver)."""
-    message = get_object_or_404(Message, id=message_id)
+    message = get_object_or_404(
+        Message.objects.select_related('sender', 'receiver'),
+        id=message_id
+    )
 
     if request.user in [message.sender, message.receiver]:
         message.delete()
-        messages.success(request, "Message deleted.")
-    else:
-        messages.error(request, "You can't delete this message.")
+        return JsonResponse({'success': True})
+    
+    return JsonResponse({'success': False, 'error': "Permission denied"})
 
-    return redirect(request.META.get("HTTP_REFERER", "message_list"))
 
-# Feed View
-def feed_view(request):
-    posts = Post.objects.all().order_by('-created_at')
-    return render(request, 'feed/feed.html', {'posts': posts})
+# Admin Views
+
+@login_required
+@staff_member_required
+def verify_user(request, user_id):
+    user = get_object_or_404(User, id=user_id)
+    user.is_verified = True
+    user.save()
+    return JsonResponse({'success': True, 'is_verified': True})
+
+# Home View
+
+def home_view(request):
+    unread_count = 0
+    if request.user.is_authenticated:
+        unread_count = Message.objects.filter(
+            receiver=request.user, 
+            is_read=False
+        ).count()
+    
+    return render(request, "home.html", {
+        "unread_count": unread_count
+    })
 
 
 

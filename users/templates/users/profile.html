@@ -1,70 +1,231 @@
 {% extends "base.html" %}
 {% load static %}
 
+{% block css %}
+<link rel="stylesheet" href="{% static 'css/profile.css' %}">
+<!-- NEW: Animate.css for animations -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+{% endblock %}
+
 {% block content %}
 <div class="profile-container">
-    <!-- Profile Header -->
+    <!-- NEW: Cover Photo Section -->
+    <div class="cover-photo" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+        {% if profile_user == user %}
+        <button class="edit-cover-btn">✏️ Edit Cover</button>
+        {% endif %}
+    </div>
+
+    <!-- Enhanced Profile Header -->
     <div class="profile-header">
         <div class="profile-picture">
             {% if profile_user.profile_image %}
-                <img src="{{ profile_user.profile_image.url }}" alt="Profile Image" class="profile-img">
+                <img src="{{ profile_user.profile_image.url }}" alt="Profile Image" 
+                     class="profile-img animate__animated animate__fadeIn" 
+                     id="profile-avatar">
             {% else %}
-                <img src="{% static 'profile_pics/default_profile.webp' %}" alt="Default Profile Image" class="profile-img">
+                <img src="{% static 'profile_pics/default_profile.webp' %}" 
+                     alt="Default Profile Image" 
+                     class="profile-img animate__animated animate__fadeIn"
+                     id="profile-avatar">
             {% endif %}
+            
+            <!-- NEW: Online Status Badge -->
+            <div class="status-badge {% if profile_user.is_online %}online{% else %}offline{% endif %}">
+                {{ profile_user.is_online|yesno:"Online,Offline" }}
+            </div>
         </div>
+
         <div class="profile-info">
-            <h1 class="username glow-text">{{ profile_user.username }}</h1>
-            <p class="bio">{{ profile_user.bio|default_if_none:"No bio yet." }}</p>
-            <div class="stats">
-                <span class="stat"><strong>Posts:</strong> {{ user_posts|length }}</span>
-                <span class="stat"><strong>Followers:</strong> {{ followers_count }}</span>
-                <span class="stat"><strong>Following:</strong> {{ following_count }}</span>
+            <div class="username-wrapper">
+                <h1 class="username glow-text">{{ profile_user.username }}</h1>
+                <!-- NEW: Verification Badge -->
+                {% if profile_user.is_verified %}
+                <span class="verified-badge" title="Verified User">✓</span>
+                {% endif %}
             </div>
             
-            {% if profile_user != user %}
-                {% if is_following %}
-                    <a href="{% url 'unfollow_user' username=profile_user.username %}" class="btn btn-unfollow">Unfollow</a>
-                {% else %}
-                    <a href="{% url 'follow_user' username=profile_user.username %}" class="btn btn-follow">Follow</a>
+            <!-- NEW: Social Links -->
+            <div class="social-links">
+                {% if profile_user.social_links.twitter %}
+                <a href="{{ profile_user.social_links.twitter }}" target="_blank"><i class="fab fa-twitter"></i></a>
                 {% endif %}
+                {% if profile_user.social_links.instagram %}
+                <a href="{{ profile_user.social_links.instagram }}" target="_blank"><i class="fab fa-instagram"></i></a>
+                {% endif %}
+            </div>
+
+            <p class="bio">{{ profile_user.bio|default_if_none:"No bio yet."|urlize }}</p>
+            
+            <!-- Enhanced Stats with HTMX -->
+            <div class="stats" hx-get="{% url 'user_stats' profile_user.username %}" hx-trigger="every 5s">
+                <div class="stat">
+                    <strong>Posts</strong>
+                    <span class="count">{{ user_posts|length }}</span>
+                </div>
+                <div class="stat">
+                    <strong>Followers</strong>
+                    <span class="count">{{ followers_count }}</span>
+                </div>
+                <div class="stat">
+                    <strong>Following</strong>
+                    <span class="count">{{ following_count }}</span>
+                </div>
+            </div>
+
+            <!-- NEW: Follow Button with Animation -->
+            {% if profile_user != user %}
+            <button class="follow-btn {% if is_following %}following{% endif %}" 
+                    data-user-id="{{ profile_user.id }}"
+                    data-follow-url="{% url 'follow_user' %}"
+                    data-csrf="{{ csrf_token }}">
+                {% if is_following %}
+                <span class="check">✓</span> Following
+                {% else %}
+                + Follow
+                {% endif %}
+            </button>
             {% endif %}
         </div>
     </div>
 
-    <!-- Create Post Button -->
-    {% if profile_user == user %}
-        <div class="create-post">
-            <a href="{% url 'feed' %}" class="btn btn-create">➕ Create a New Post</a>
-        </div>
-    {% endif %}
+    <!-- NEW: Interactive Tabs -->
+    <nav class="profile-tabs">
+        <button class="tab-btn active" data-tab="posts">Posts</button>
+        <button class="tab-btn" data-tab="likes">Likes</button>
+        <button class="tab-btn" data-tab="saved">Saved</button>
+        {% if profile_user == user %}
+        <button class="tab-btn" data-tab="drafts">Drafts</button>
+        {% endif %}
+    </nav>
 
-    <!-- User Posts -->
-    <div class="posts-section">
-        <h2 class="section-title">Your Posts</h2>
-        <div class="post-grid">
-            {% for post in user_posts %}
-                <div class="post-card">
-                    <p class="post-date">{{ post.created_at|date:"F j, Y, g:i a" }}</p>
-                    <p class="post-content">{{ post.content }}</p>
-                    <div class="post-stats">
-                        <span class="likes">❤️ {{ post.likes.count }} Likes</span>
-                        <span class="comments">💬 {{ post.comments.count }} Comments</span>
+    <!-- Posts Section (Now Tabbed) -->
+    <div id="posts" class="tab-content active">
+        {% if profile_user == user %}
+        <div class="create-post">
+            <a href="{% url 'feed' %}" class="btn btn-create">
+                <i class="fas fa-plus"></i> Create New Post
+            </a>
+        </div>
+        {% endif %}
+
+        <div class="posts-section">
+            <div class="post-grid">
+                {% for post in user_posts %}
+                <div class="post-card animate__animated animate__fadeInUp">
+                    <!-- NEW: Post Header with Menu -->
+                    <div class="post-header">
+                        <div class="post-author">
+                            <img src="{{ post.user.profile_image.url|default:'{% static "profile_pics/default_profile.webp" %}' }}" 
+                                 class="post-author-img">
+                            <span>{{ post.user.username }}</span>
+                        </div>
+                        {% if profile_user == user %}
+                        <div class="post-actions">
+                            <button class="post-menu-btn">⋮</button>
+                            <div class="post-menu">
+                                <button>Edit</button>
+                                <button class="delete-post" data-post-id="{{ post.id }}">Delete</button>
+                            </div>
+                        </div>
+                        {% endif %}
                     </div>
-                    <a href="{% url 'post_detail' post.id %}" class="btn btn-view">View Post</a>
-                    <!-- Like Button -->
-                    <button class="like-btn">🤍 Like</button>
+
+                    <p class="post-content">{{ post.content }}</p>
+                    {% if post.image %}
+                    <img src="{{ post.image.url }}" class="post-image">
+                    {% endif %}
+                    
+                    <div class="post-footer">
+                        <div class="post-stats">
+                            <span class="likes">
+                                <i class="fas fa-heart"></i> {{ post.likes.count }}
+                            </span>
+                            <span class="comments">
+                                <i class="fas fa-comment"></i> {{ post.comments.count }}
+                            </span>
+                        </div>
+                        <div class="post-actions">
+                            <a href="{% url 'post_detail' post.id %}" class="btn btn-view">
+                                <i class="fas fa-eye"></i> View
+                            </a>
+                        </div>
+                    </div>
                 </div>
-            {% empty %}
-                <p class="no-posts">No posts yet.</p>
-            {% endfor %}
+                {% empty %}
+                <div class="no-posts">
+                    <img src="{% static 'images/no_posts.svg' %}" alt="No posts yet">
+                    <p>No posts yet.</p>
+                </div>
+                {% endfor %}
+            </div>
         </div>
     </div>
+
+    <!-- NEW: Empty Tab Contents (Will be loaded via HTMX) -->
+    <div id="likes" class="tab-content"></div>
+    <div id="saved" class="tab-content"></div>
+    {% if profile_user == user %}
+    <div id="drafts" class="tab-content"></div>
+    {% endif %}
 </div>
 {% endblock %}
 
+{% block js %}
+<!-- NEW: Required Libraries -->
+<script src="https://kit.fontawesome.com/your-code.js" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/htmx.org@1.9.0"></script>
 
+<!-- NEW: Profile Interactions JS -->
+<script src="{% static 'js/profile.js' %}"></script>
 
+<script>
+// NEW: Tab System
+document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        // Remove active class from all
+        document.querySelectorAll('.tab-btn, .tab-content').forEach(el => {
+            el.classList.remove('active');
+        });
+        
+        // Add to clicked tab
+        btn.classList.add('active');
+        const tabId = btn.dataset.tab;
+        document.getElementById(tabId).classList.add('active');
+        
+        // Load content via HTMX if empty
+        if(document.getElementById(tabId).innerHTML === '') {
+            htmx.ajax('GET', `/profile/{{ profile_user.username }}/${tabId}/`, `#${tabId}`);
+        }
+    });
+});
 
-
-
-
+// NEW: Follow Button AJAX
+document.querySelector('.follow-btn')?.addEventListener('click', async function() {
+    const btn = this;
+    const formData = new FormData();
+    formData.append('user_id', btn.dataset.userId);
+    formData.append('csrfmiddlewaretoken', btn.dataset.csrf);
+    
+    try {
+        const response = await fetch(btn.dataset.followUrl, {
+            method: 'POST',
+            body: formData
+        });
+        
+        if(response.ok) {
+            const data = await response.json();
+            btn.classList.toggle('following');
+            btn.innerHTML = data.is_following 
+                ? '<span class="check">✓</span> Following' 
+                : '+ Follow';
+            
+            // Update stats
+            htmx.trigger('.stats', 'refresh');
+        }
+    } catch(error) {
+        console.error('Error:', error);
+    }
+});
+</script>
+{% endblock %}

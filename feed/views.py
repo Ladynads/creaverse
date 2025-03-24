@@ -5,7 +5,7 @@ from django.db.models import Count, Q, F, Value, IntegerField, Case, When
 from django.utils.timezone import now
 import datetime
 from feed.models import Post
-from users.models import Comment  
+from .models import Comment   
 
 
 # ✅ AI-Powered Feed View

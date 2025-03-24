@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from .models import CustomUser, InviteCode, Comment, Message, UserInteraction
+from .models import CustomUser, InviteCode, Message, UserInteraction
 
 # Custom User Admin
 class CustomUserAdmin(UserAdmin):
@@ -60,6 +60,5 @@ class UserInteractionAdmin(admin.ModelAdmin):
 if not admin.site.is_registered(CustomUser):
     admin.site.register(CustomUser, CustomUserAdmin)
 admin.site.register(InviteCode, InviteCodeAdmin)
-admin.site.register(Comment, CommentAdmin)
 admin.site.register(Message, MessageAdmin)
 admin.site.register(UserInteraction, UserInteractionAdmin)
