@@ -26,10 +26,7 @@ def upload_to_profile_pics(instance, filename):
 
 class CustomUser(AbstractUser):
     """Extended user model with authentication and basic profile fields."""
-    # Core Authentication Fields (inherited from AbstractUser)
-    # username, email, password, etc. are already included
-    
-    # Profile Display Fields
+   
     bio = models.TextField(
         blank=True,
         null=True,
@@ -322,4 +319,4 @@ class Profile(models.Model):
         """Returns the cover image URL or default gradient if none exists."""
         if self.cover_image and hasattr(self.cover_image, "url"):
             return self.cover_image.url
-        return None  # Will use CSS gradient as fallback
+        return None  

@@ -8,7 +8,7 @@
       <p>Posted by <strong>{{ post.user.username }}</strong> on {{ post.created_at|date:"F j, Y, g:i a" }}</p>
     </div>
 
-    <!-- ✅ Like Button (AJAX) -->
+    <!-- Like Button (AJAX) -->
     <button class="like-btn" data-post-id="{{ post.id }}">
         {% if user in post.likes.all %}
             ❤️ Unlike
@@ -18,7 +18,7 @@
     </button>
     <span id="like-count-{{ post.id }}">{{ post.likes.count }}</span> Likes
 
-    <!-- ✅ Comments Section -->
+    <!-- Comments Section -->
     <div class="comments-section">
       <h4>💬 Comments:</h4>
       <ul id="comment-list-{{ post.id }}">
@@ -40,7 +40,7 @@
       </ul>
     </div>
 
-    <!-- ✅ Add Comment Form (AJAX) -->
+    <!-- Add Comment Form (AJAX) -->
     {% if user.is_authenticated %}
       <form class="comment-form" data-post-id="{{ post.id }}">
         {% csrf_token %}
@@ -49,29 +49,29 @@
       </form>
     {% endif %}
 
-    <!-- ✅ Back to Feed Button -->
+    <!-- Back to Feed Button -->
     <a href="{% url 'feed' %}" class="btn-primary">Back to Feed</a>
   </div>
 
-  <!-- ✅ JavaScript for AJAX Like & Comment System -->
+  <!-- JavaScript for AJAX Like & Comment System -->
   <script>
   document.addEventListener("DOMContentLoaded", function () {
-      // ✅ Function to Refresh Post Detail without Reloading
+     
       function refreshPostDetail() {
-          fetch("{% url 'post_detail' post.id %}")  // Fetch updated post details from the backend
+          fetch("{% url 'post_detail' post.id %}")  
           .then(response => response.text())
           .then(html => {
               let parser = new DOMParser();
               let doc = parser.parseFromString(html, "text/html");
               let newComments = doc.querySelector("ul#comment-list-{{ post.id }}").innerHTML;
-              document.querySelector("ul#comment-list-{{ post.id }}").innerHTML = newComments;  // Replace old comments with new ones
-              attachLikeHandlers();  // Reattach event listeners
+              document.querySelector("ul#comment-list-{{ post.id }}").innerHTML = newComments;  
+              attachLikeHandlers(); 
               attachCommentHandlers();
           })
           .catch(error => console.error("Error fetching post details:", error));
       }
 
-      // ✅ AJAX for Likes
+      // AJAX for Likes
       function attachLikeHandlers() {
           document.querySelectorAll(".like-btn").forEach(button => {
               button.addEventListener("click", function () {
@@ -100,11 +100,11 @@
           });
       }
 
-      // ✅ AJAX for Comments
+      // AJAX for Comments
       function attachCommentHandlers() {
           document.querySelectorAll(".comment-form").forEach(form => {
               form.addEventListener("submit", function (event) {
-                  event.preventDefault();  // ✅ Prevent default form submission
+                  event.preventDefault(); 
                   let postId = this.dataset.postId;
                   let url = `{% url 'add_comment' 999999 %}`.replace('999999', postId);
                   let formData = new FormData(this);
@@ -121,8 +121,8 @@
                           let newComment = document.createElement("li");
                           newComment.innerHTML = `<strong><a href="/users/${data.username}">${data.username}</a></strong>: ${data.comment}`;
                           commentList.appendChild(newComment);
-                          this.reset();  // ✅ Clear input after submission
-                          refreshPostDetail();  // Refresh post details after comment
+                          this.reset(); 
+                          refreshPostDetail();  
                       }
                   })
                   .catch(error => console.error("Error:", error));
@@ -130,7 +130,7 @@
           });
       }
 
-      // ✅ Function to get CSRF token
+      // Function to get CSRF token
       function getCookie(name) {
           let cookieValue = null;
           if (document.cookie && document.cookie !== "") {
@@ -146,8 +146,8 @@
           return cookieValue;
       }
 
-      attachLikeHandlers();  // Attach like event listeners on page load
-      attachCommentHandlers();  // Attach comment event listeners on page load
+      attachLikeHandlers(); 
+      attachCommentHandlers(); 
   });
   </script>
 

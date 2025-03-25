@@ -3,7 +3,7 @@
 <div class="messages-container">
     <h2>📩 Your Conversations</h2>
 
-    <!-- ✅ Display Flash Messages (Success, Error, Warning) -->
+    <!-- Display Flash Messages (Success, Error, Warning) -->
     {% if messages %}
         <div class="flash-messages">
             {% for message in messages %}
@@ -12,7 +12,7 @@
         </div>
     {% endif %}
 
-    <!-- ✅ Received Messages -->
+    <!--  Received Messages -->
     <h3>Messages You've Received</h3>
     {% if received_messages %}
         <ul class="received-messages">
@@ -22,7 +22,7 @@
                     <p>{{ msg.content }}</p>
                     <small>{{ msg.created_at|date:"F j, Y, g:i a" }}</small>
 
-                    <!-- ✅ Reply & Delete Buttons -->
+                    <!-- Reply & Delete Buttons -->
                     <div class="message-actions">
                         <a href="{% url 'send_message' msg.sender.id %}" class="btn-secondary">Reply</a>
                         <a href="{% url 'delete_message' msg.id %}" class="btn-danger">Delete</a>
@@ -34,7 +34,7 @@
         <p>No new messages.</p>
     {% endif %}
 
-    <!-- ✅ Sent Messages -->
+    <!--  Sent Messages -->
     <h3>Messages You've Sent</h3>
     {% if sent_messages %}
         <ul class="sent-messages">
@@ -44,7 +44,7 @@
                     <p>{{ msg.content }}</p>
                     <small>{{ msg.created_at|date:"F j, Y, g:i a" }}</small>
 
-                    <!-- ✅ Delete Option -->
+                    <!-- Delete Option -->
                     <div class="message-actions">
                         <a href="{% url 'delete_message' msg.id %}" class="btn-danger">Delete</a>
                     </div>

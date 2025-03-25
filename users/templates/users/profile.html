@@ -48,7 +48,7 @@
 
             <p class="bio">{{ profile_user.bio|default_if_none:"No bio yet."|urlize }}</p>
 
-            <!-- Cleaned Live Stats -->
+            <!--  Live Stats -->
             <div class="stats" id="live-stats" hx-get="{% url 'user_stats' profile_user.username %}" hx-trigger="load, every 10s" hx-swap="outerHTML">
                 <div class="stat"><strong>Posts</strong><span class="count">{{ user_posts|length }}</span></div>
                 <div class="stat"><strong>Followers</strong><span class="count">{{ followers_count }}</span></div>
@@ -147,7 +147,7 @@
 <script>
 document.body.addEventListener('htmx:afterProcessNode', function() {
     if (document.querySelector('.profile-container')) {
-        // JS reinitialization handled in profile.js
+       
     }
 });
 </script>

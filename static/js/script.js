@@ -1,6 +1,6 @@
-// ========================
+
 // CORE FUNCTIONALITY
-// ========================
+
 
 // Auto-dismiss flash messages
 document.addEventListener("DOMContentLoaded", function() {
@@ -20,9 +20,9 @@ document.addEventListener("DOMContentLoaded", function() {
     });
 });
 
-// ========================
+
 // MESSAGING SYSTEM
-// ========================
+
 
 let messagePollInterval;
 
@@ -104,9 +104,9 @@ function setupMessageSearch() {
     }, 300));
 }
 
-// ========================
+
 // UTILITIES
-// ========================
+
 
 // Debounce function for search input
 function debounce(func, wait) {
@@ -165,9 +165,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
 });
 
-// ========================
-// INITIALIZATION
-// ========================
+
+// INITIALISATION
+
 
 // Run when DOM is fully loaded
 document.addEventListener('DOMContentLoaded', function() {
@@ -176,7 +176,7 @@ document.addEventListener('DOMContentLoaded', function() {
         setupMessagePolling();
     }
 
-    // Initialize search if search input exists
+   
     if ($('#message-search')) {
         setupMessageSearch();
     }

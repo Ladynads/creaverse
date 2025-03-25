@@ -25,11 +25,9 @@
     <link rel="preload" href="{% static 'js/messaging.js' %}" as="script">
     <link rel="preload" href="{% static 'js/profile.js' %}" as="script">
     
-    <!-- Favicon -->
-    <link rel="icon" href="{% static 'images/favicon.ico' %}">
 </head>
 <body>
-    <!-- Flash Messages (Modern Style) -->
+    <!-- Flash Messages -->
     {% if messages %}
     <div class="flash-messages">
         {% for message in messages %}
@@ -106,7 +104,7 @@
         {% endif %}
     </main>
 
-    <!-- Footer with Enhanced Links -->
+    <!-- Footer -->
 <footer class="footer">
     <div class="footer-content">
         <div class="footer-links">
@@ -134,7 +132,7 @@
     <script src="{% static 'js/profile.js' %}" defer></script>
     
     {% block extra_js %}
-        <!-- Page-specific JS will be loaded here -->
+      
     {% endblock %}
     
     <!-- Flash Messages JS -->

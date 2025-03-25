@@ -8,7 +8,7 @@
     <form method="post" enctype="multipart/form-data" class="register-form">
       {% csrf_token %}
 
-      <!-- ✅ User Details Fields -->
+      <!-- User Details Fields -->
       <div class="form-group">
         <label for="username">Username:</label>
         {{ form.username }}
@@ -29,13 +29,13 @@
         {{ form.password2 }}
       </div>
 
-      <!-- ✅ Profile Picture Upload -->
+      <!-- Profile Picture Upload -->
       <div class="form-group">
         <label for="profile_image">Profile Image (Optional):</label>
         {{ form.profile_image }}
       </div>
 
-      <!-- ✅ Invite Code Field -->
+      <!-- Invite Code Field -->
       <div class="form-group">
         <label for="invite_code">🔑 Invite Code:</label>
         <input type="text" name="invite_code" required placeholder="Enter your invite code">
@@ -55,7 +55,7 @@
 
   <p class="invite-info">💡 **No invite?** Stay tuned for exclusive invitations from our members or join the waitlist!</p>
 
-  <!-- ✅  Styling -->
+  <!-- Styling -->
   <style>
     .register-container {
       max-width: 400px;

@@ -4,13 +4,13 @@
 <h2>🎟 Invite Friends to CreatorVerse</h2>
 <p>Generate an invite code to share with a friend!</p>
 
-<!-- ✅ Invite Code Generator -->
+<!-- Invite Code Generator -->
 <form id="generate-invite-form">
     {% csrf_token %}
     <button type="submit">➕ Generate Invite Code</button>
 </form>
 
-<!-- ✅ Show Existing Codes -->
+<!-- Show Existing Codes -->
 <h3>Your Invite Codes</h3>
 <ul id="invite-code-list">
     {% for invite in invite_codes %}
@@ -18,7 +18,7 @@
             <strong id="code-{{ invite.id }}">{{ invite.code }}</strong> 
             {% if invite.used_by %} (Used by {{ invite.used_by.username }}) {% else %} (Unused) {% endif %}
 
-            <!-- ✅ Copy & Email Buttons (Only if not used) -->
+            <!-- Copy & Email Buttons (Only if not used) -->
             {% if not invite.used_by %}
                 <button class="copy-btn" data-code="{{ invite.code }}">📋 Copy</button>
                 <button class="email-btn" data-code="{{ invite.code }}">📧 Send Email</button>
@@ -29,13 +29,13 @@
     {% endfor %}
 </ul>
 
-<!-- ✅ JavaScript for AJAX Generation, Copy & Email -->
+<!-- JavaScript for AJAX Generation, Copy & Email -->
 <script>
 document.addEventListener("DOMContentLoaded", function() {
     const generateForm = document.getElementById("generate-invite-form");
     const inviteList = document.getElementById("invite-code-list");
 
-    // ✅ Fetch CSRF Token from Cookies (Fixes AJAX CSRF issue)
+    // Fetch CSRF Token from Cookies
     function getCSRFToken() {
         let cookieValue = null;
         const cookies = document.cookie.split(";");
@@ -49,7 +49,7 @@ document.addEventListener("DOMContentLoaded", function() {
         return cookieValue;
     }
 
-    // ✅ AJAX Invite Code Generation
+    // AJAX Invite Code Generation
     generateForm.addEventListener("submit", function(event) {
         event.preventDefault();
 
@@ -71,7 +71,7 @@ document.addEventListener("DOMContentLoaded", function() {
                     <button class="email-btn" data-code="${data.code}">📧 Send Email</button>
                 `;
                 inviteList.appendChild(newItem);
-                attachEventListeners(newItem); // ✅ Attach event listeners
+                attachEventListeners(newItem);
             } else {
                 alert("⚠️ " + data.error);
             }
@@ -79,7 +79,7 @@ document.addEventListener("DOMContentLoaded", function() {
         .catch(error => console.error("Error generating invite:", error));
     });
 
-    // ✅ Attach Event Listeners to Copy & Email Buttons
+    // Attach Event Listeners to Copy & Email Buttons
     function attachEventListeners(element) {
         const copyButton = element.querySelector(".copy-btn");
         if (copyButton) {
@@ -94,7 +94,7 @@ document.addEventListener("DOMContentLoaded", function() {
             });
         }
 
-        // ✅ Send Invite via Email
+        // Send Invite via Email
         const emailButton = element.querySelector(".email-btn");
         if (emailButton) {
             emailButton.addEventListener("click", function() {
@@ -123,7 +123,7 @@ document.addEventListener("DOMContentLoaded", function() {
         }
     }
 
-    // ✅ Attach to Existing Invite Codes on Page Load
+    
     document.querySelectorAll("#invite-code-list li").forEach(attachEventListeners);
 });
 </script>

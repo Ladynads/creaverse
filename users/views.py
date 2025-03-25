@@ -29,14 +29,14 @@ from django.core.cache import cache
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
 
-# ===== Helper Functions =====
+# Helper Functions 
 def get_unread_count(user):
     """Count unread messages for a user"""
     if not user.is_authenticated:
         return 0
     return Message.objects.filter(receiver=user, is_read=False).count()
 
-# ===== HTMX Views =====
+#  HTMX Views 
 @login_required
 @require_http_methods(["GET"])
 def user_stats_view(request, username):
@@ -49,7 +49,7 @@ def user_stats_view(request, username):
     })
 
 
-# ===== Authentication Views =====
+# Authentication Views 
 def register(request):
     """Invite-only registration with optimized queries"""
     form = CustomUserCreationForm()  # Initialize the form here
@@ -85,7 +85,7 @@ class CustomLogoutView(LogoutView):
         return redirect(self.next_page)
 
 
-# ===== Profile Views =====
+# Profile Views 
 @login_required
 def profile_view(request, username):
     """View user profile with optimized queries and accurate counting"""
@@ -136,7 +136,7 @@ def profile_view(request, username):
 def profile_edit(request):
     """Edit profile with form handling for both user and profile data"""
     user = request.user
-    profile = user.profile  # Will raise AttributeError if profile doesn't exist
+    profile = user.profile  
     
     if request.method == "POST":
         user_form = ProfileEditForm(request.POST, request.FILES, instance=user)
@@ -147,7 +147,7 @@ def profile_edit(request):
                 user = user_form.save()
                 profile_form.save()
                 
-                # Handle social links if included in form
+             
                 social_links = user_form.cleaned_data.get('social_links', {})
                 if social_links:
                     user.social_links = social_links
@@ -211,7 +211,7 @@ def update_cover(request):
             'error': 'Server error during upload'
         }, status=500)
 
-# ===== Profile Tab Views =====
+# Profile Tab Views
 @login_required
 def profile_tab_content(request, username, tab_name):
     """HTMX endpoint for tabbed content with optimized queries"""
@@ -220,7 +220,7 @@ def profile_tab_content(request, username, tab_name):
         username=username
     )
     
-    # Base queryset with common select_related
+ 
     posts = Post.objects.select_related('user').filter(user=profile_user)
     
     if tab_name == 'likes':
@@ -244,11 +244,11 @@ def profile_tab_content(request, username, tab_name):
     
     return render(request, template, {
         'profile_user': profile_user,
-        'posts': posts.order_by('-created_at')[:20],  # Consistent pagination
+        'posts': posts.order_by('-created_at')[:20],
         'is_owner': profile_user == request.user,
     })
 
-# ===== Social Interaction Views =====
+#  Social Interaction Views 
 @login_required
 @require_POST
 def follow_toggle(request, username):
@@ -262,7 +262,7 @@ def follow_toggle(request, username):
     if request.user.following.filter(id=target_user.id).exists():
         request.user.following.remove(target_user)
         action = 'unfollowed'
-        # Remove interaction record
+        
         UserInteraction.objects.filter(
             user=request.user,
             target_user=target_user,
@@ -271,7 +271,7 @@ def follow_toggle(request, username):
     else:
         request.user.following.add(target_user)
         action = 'followed'
-        # Create interaction record
+        
         UserInteraction.objects.create(
             user=request.user,
             target_user=target_user,
@@ -298,7 +298,7 @@ def update_social_links(request):
         return JsonResponse({'success': True})
     return JsonResponse({'success': False})
 
-# ===== Invite System Views =====
+# Invite System Views 
 @login_required
 def invite_view(request):
     """View for managing invite codes"""
@@ -346,7 +346,7 @@ def generate_invite(request):
         "code": new_code.code
     })
 
-# ===== Messaging Views =====
+# Messaging Views 
 @login_required
 def message_list(request):
     """List all messages"""
@@ -458,7 +458,7 @@ def inbox_view(request):
     }
     return render(request, 'messages/inbox.html', context)
 
-# ===== Admin Views =====
+# Admin Views 
 @login_required
 @staff_member_required
 def verify_user(request, user_id):
@@ -468,7 +468,7 @@ def verify_user(request, user_id):
     user.save()
     return JsonResponse({'success': True, 'is_verified': True})
 
-# ===== Home View =====
+# Home View 
 def home_view(request):
     """Home page view with featured creators"""
     featured_creators = (
@@ -489,7 +489,7 @@ def home_view(request):
         "now": timezone.now()
     })
 
-# ===== Essential Views =====
+# Essential Views 
 def about_view(request):
     """About page view"""
     return render(request, 'about.html')

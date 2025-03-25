@@ -20,7 +20,7 @@ sys.path.append(str(BASE_DIR))
 
 # Core Settings
 SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'django-insecure-change-me-for-production')
-DEBUG = os.getenv('DEBUG', 'True') == 'True'
+DEBUG = os.getenv('DEBUG', 'False').lower() == 'true'
 ALLOWED_HOSTS = os.getenv('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
 SITE_URL = os.getenv('SITE_URL', 'http://localhost:8000')  # For absolute URLs
 

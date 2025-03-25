@@ -2,7 +2,7 @@
 {% block content %}
 <h2>👤 {{ profile_user.username }}'s Profile</h2>
 
-<!-- ✅ Profile Image (Handles missing images) -->
+<!-- Profile Image -->
 {% if profile_user.profile_image %}
     <img src="{{ profile_user.get_profile_image }}" alt="Profile Image" width="100">
 
@@ -13,7 +13,7 @@
 <p><strong>Bio:</strong> {{ profile_user.bio|default:"No bio available." }}</p>
 <p><strong>Email:</strong> {{ profile_user.email }}</p>
 
-<!-- ✅ Message Button (Only for other users) -->
+<!-- Message Button -->
 {% if user != profile_user %}
     <p><a href="{% url 'send_message' user_id=profile_user.id %}" class="btn btn-primary">📩 Message {{ profile_user.username }}</a></p>
 {% endif %}

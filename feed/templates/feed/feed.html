@@ -109,9 +109,9 @@
     }
 
     document.addEventListener("DOMContentLoaded", function () {
-        // ================================
+     
         // Detect typing inside comments
-        // ================================
+       
         let isTyping = false;
         document.addEventListener("input", function (e) {
             if (e.target.closest(".comment-form")) {
@@ -123,9 +123,9 @@
             }
         });
 
-        // ================================
+      
         // Refresh Feed if NOT typing
-        // ================================
+       
         function refreshFeed() {
             fetch("{% url 'feed' %}")
                 .then(response => response.text())
@@ -147,9 +147,9 @@
             }
         }, 10000); // Every 10s if not typing
 
-        // ================================
+       
         // AJAX Likes
-        // ================================
+       
         function attachLikeHandlers() {
             document.querySelectorAll(".like-btn").forEach(button => {
                 button.addEventListener("click", function () {
@@ -177,9 +177,9 @@
             });
         }
 
-        // ================================
+       
         // AJAX Comments
-        // ================================
+      
         function attachCommentHandlers() {
             document.querySelectorAll(".comment-form").forEach(form => {
                 form.addEventListener("submit", function (event) {
@@ -213,9 +213,9 @@
             });
         }
 
-        // ================================
+        
         // Toggle Comments on Button Click
-        // ================================
+      
         function attachToggleHandlers() {
             document.querySelectorAll(".comment-btn").forEach(button => {
                 button.addEventListener("click", () => {

@@ -28,9 +28,8 @@ function initMessageSearch() {
     }, 300));
 }
 
-// ========================
 // REAL-TIME MESSAGING
-// ========================
+
 
 var messagePollInterval;
 let currentThreadId = null;
@@ -83,7 +82,7 @@ function checkForNewMessages() {
 function appendNewMessages(messages) {
     const container = document.querySelector('.messages-thread');
     messages.forEach(msg => {
-        // Only add if not already present
+       
         if (!document.querySelector(`.message-bubble[data-message-id="${msg.id}"]`)) {
             const bubble = createMessageBubble(msg);
             container.appendChild(bubble);
@@ -111,17 +110,17 @@ function createMessageBubble(message) {
     return bubble;
 }
 
-// ========================
+
 // TYPING INDICATORS
-// ========================
+
 
 let typingTimeout;
 
 function showTypingIndicator(userId) {
-    // Only show if we don't already have one
+   
     if (document.querySelector('.typing-indicator')) return;
     
-    // Get user info (you'll need to implement this based on your user system)
+
     const user = getUserInfo(userId);
     
     const indicator = document.createElement('div');
@@ -140,10 +139,10 @@ function showTypingIndicator(userId) {
     document.querySelector('.messages-thread').appendChild(indicator);
     scrollToLatestMessage();
     
-    // Clear any existing timeout
+  
     if (typingTimeout) clearTimeout(typingTimeout);
     
-    // Auto-hide after 5 seconds if no updates
+  
     typingTimeout = setTimeout(hideTypingIndicator, 5000);
 }
 
@@ -152,19 +151,18 @@ function hideTypingIndicator() {
     if (indicator) indicator.remove();
 }
 
-// ========================
+
 // MESSAGE COMPOSITION
-// ========================
+
 
 function setupMessageForms() {
-    // Auto-resizing textareas
     document.querySelectorAll('.message-form textarea').forEach(textarea => {
         textarea.addEventListener('input', function() {
             this.style.height = 'auto';
             this.style.height = (this.scrollHeight) + 'px';
         });
         
-        // Send on Ctrl+Enter
+      
         textarea.addEventListener('keydown', function(e) {
             if (e.ctrlKey && e.key === 'Enter') {
                 e.preventDefault();
@@ -172,7 +170,7 @@ function setupMessageForms() {
             }
         });
         
-        // Typing indicators
+  
         textarea.addEventListener('input', debounce(function() {
             if (this.value.trim().length > 0) {
                 sendTypingIndicator(true);
@@ -180,18 +178,16 @@ function setupMessageForms() {
         }, 1000));
     });
     
-    // Form submission handling
+  
     document.querySelectorAll('.message-form').forEach(form => {
         form.addEventListener('submit', function(e) {
-            // Add loading state
             const submitBtn = this.querySelector('button[type="submit"]');
             if (submitBtn) {
                 submitBtn.disabled = true;
                 submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
             }
             
-            // You might want to add AJAX form submission here
-            // For now, we'll let it submit normally
+           
         });
     });
 }
@@ -212,15 +208,13 @@ function sendTypingIndicator(isTyping) {
     }).catch(console.error);
 }
 
-// ========================
+
 // CONNECTION MONITORING
-// ========================
+
 
 function setupConnectionMonitoring() {
-    // Only on pages where messaging is active
     if (!document.querySelector('.message-thread-container, .inbox-container')) return;
     
-    // Create status element if it doesn't exist
     if (!document.getElementById('connection-status')) {
         const statusEl = document.createElement('div');
         statusEl.id = 'connection-status';
@@ -232,7 +226,7 @@ function setupConnectionMonitoring() {
         document.body.appendChild(statusEl);
     }
     
-    // Check connection periodically
+    
     setInterval(checkConnection, 10000);
 }
 
@@ -256,7 +250,7 @@ function updateConnectionStatus(status) {
 }
 
 function checkConnection() {
-    // Simple ping to check connection quality
+   
     const start = Date.now();
     fetch('/messages/api/ping/')
         .then(() => {
@@ -272,9 +266,9 @@ function checkConnection() {
         });
 }
 
-// ========================
+
 // MOBILE COMPOSE BUTTON
-// ========================
+
 
 function setupMobileComposeButton() {
     const composeBtn = document.querySelector('.mobile-compose-btn');
@@ -286,9 +280,9 @@ function setupMobileComposeButton() {
     });
 }
 
-// ========================
+
 // UTILITY FUNCTIONS
-// ========================
+
 
 function scrollToLatestMessage() {
     const container = document.querySelector('.messages-thread');
@@ -298,8 +292,6 @@ function scrollToLatestMessage() {
 }
 
 function formatMessageTime(timestamp) {
-    // Convert to relative time (e.g. "2 minutes ago")
-    // You might want to use a library like moment.js for better formatting
     return new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 }
 
@@ -316,12 +308,8 @@ function getCSRFToken() {
     return document.querySelector('[name=csrfmiddlewaretoken]')?.value || '';
 }
 
-// Mock function - replace with your actual user lookup
 function getUserInfo(userId) {
-    // In a real implementation, you might:
-    // 1. Have user data already in the DOM
-    // 2. Make an API call to get user info
-    // 3. Use a client-side store
+   
     
     return {
         id: userId,

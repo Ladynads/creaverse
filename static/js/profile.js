@@ -1,6 +1,6 @@
-// ========================
+
 // PROFILE-SPECIFIC FUNCTIONALITY
-// ========================
+
 
 // Tab System with HTMX
 function setupProfileTabs() {
@@ -107,9 +107,9 @@ function setupFollowButton() {
     });
 }
 
-// ========================
+
 // INIT
-// ========================
+
 function initProfilePage() {
     if (document.querySelector('.profile-container')) {
         setupProfileTabs();
