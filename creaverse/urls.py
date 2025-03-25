@@ -8,6 +8,7 @@ from django.conf import settings
 from django.conf.urls.static import static
 from users.views import home_view
 
+
 urlpatterns = [
     # Home Route 
     path('', home_view, name='home'),

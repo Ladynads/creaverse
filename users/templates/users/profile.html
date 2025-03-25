@@ -4,17 +4,14 @@
 {% block css %}
 <link rel="stylesheet" href="{% static 'css/styles.css' %}">
 <link rel="stylesheet" href="{% static 'css/profile.css' %}">
-<!-- Animate.css for animations -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
-<!-- Font Awesome -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 {% endblock %}
 
 {% block content %}
-<!-- Profile page -->
 <div class="profile-container">
     <!-- Cover Photo Section -->
-    <div class="cover-photo" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+    <div class="cover-photo" style="background-image: url('{% if profile_user.profile.cover_image %}{{ profile_user.profile.cover_image.url }}{% else %}{% static 'images/default_cover.jpg' %}{% endif %}');">
         {% if profile_user == user %}
         <button class="edit-cover-btn">✏️ Edit Cover</button>
         {% endif %}
@@ -23,23 +20,15 @@
     <div class="profile-header">
         <div class="profile-picture">
             {% if profile_user.profile_image %}
-                <img src="{{ profile_user.profile_image.url }}" alt="Profile Image" 
-                     class="profile-img animate__animated animate__fadeIn" 
-                     id="profile-avatar">
+            <img src="{{ profile_user.profile_image.url }}" alt="Profile Image" class="profile-img animate__animated animate__fadeIn" id="profile-avatar">
             {% else %}
-            
-                <img src="{% static 'profile_pics/default_profile.webp' %}" 
-                     alt="Default Profile Image" 
-                     class="profile-img animate__animated animate__fadeIn"
-                     id="profile-avatar">
+            <img src="{% static 'profile_pics/default_profile.webp' %}" alt="Default Profile Image" class="profile-img animate__animated animate__fadeIn" id="profile-avatar">
             {% endif %}
-            
-            <!-- Online Status Badge -->
             <div class="status-badge {% if profile_user.is_online %}online{% else %}offline{% endif %}">
                 {{ profile_user.is_online|yesno:"Online,Offline" }}
             </div>
         </div>
-    
+
         <div class="profile-info">
             <div class="username-wrapper">
                 <h1 class="username glow-text">{{ profile_user.username }}</h1>
@@ -48,7 +37,6 @@
                 {% endif %}
             </div>
 
-            <!-- Social Links -->
             <div class="social-links">
                 {% if profile_user.social_links.twitter %}
                 <a href="{{ profile_user.social_links.twitter }}" target="_blank"><i class="fab fa-twitter"></i></a>
@@ -59,40 +47,26 @@
             </div>
 
             <p class="bio">{{ profile_user.bio|default_if_none:"No bio yet."|urlize }}</p>
-            
-            <!-- Enhanced Stats with HTMX -->
-            <div class="stats" hx-get="{% url 'user_stats' profile_user.username %}" hx-trigger="every 5s">
-                <div class="stat">
-                    <strong>Posts</strong>
-                    <span class="count">{{ user_posts|length }}</span>
-                </div>
-                <div class="stat">
-                    <strong>Followers</strong>
-                    <span class="count">{{ followers_count }}</span>
-                </div>
-                <div class="stat">
-                    <strong>Following</strong>
-                    <span class="count">{{ following_count }}</span>
-                </div>
+
+            <!-- Cleaned Live Stats -->
+            <div class="stats" id="live-stats" hx-get="{% url 'user_stats' profile_user.username %}" hx-trigger="load, every 10s" hx-swap="outerHTML">
+                <div class="stat"><strong>Posts</strong><span class="count">{{ user_posts|length }}</span></div>
+                <div class="stat"><strong>Followers</strong><span class="count">{{ followers_count }}</span></div>
+                <div class="stat"><strong>Following</strong><span class="count">{{ following_count }}</span></div>
             </div>
 
-            <!-- Follow Button -->
             {% if profile_user != user %}
             <button class="follow-btn {% if is_following %}following{% endif %}" 
                     data-user-id="{{ profile_user.id }}"
                     data-follow-url="{% url 'follow_toggle' username=profile_user.username %}"
                     data-csrf="{{ csrf_token }}">
-                {% if is_following %}
-                    <span class="check">✓</span> Following
-                {% else %}
-                    + Follow
-                {% endif %}
+                {% if is_following %}<span class="check">✓</span> Following{% else %}+ Follow{% endif %}
             </button>
             {% endif %}
         </div>
     </div>
 
-    <!-- Interactive Tabs -->
+    <!-- Tabs -->
     <nav class="profile-tabs">
         <button class="tab-btn active" data-tab="posts">Posts</button>
         <button class="tab-btn" data-tab="likes">Likes</button>
@@ -102,7 +76,6 @@
         {% endif %}
     </nav>
 
-    <!-- Posts Section -->
     <div id="posts" class="tab-content active">
         {% if profile_user == user %}
         <div class="create-post">
@@ -118,7 +91,12 @@
                 <div class="post-card animate__animated animate__fadeInUp">
                     <div class="post-header">
                         <div class="post-author">
-                            <img src="{{ user.get_profile_image }}" class="profile-avatar" alt="{{ user.username }}">
+                            {% if profile_user.profile_image %}
+                                 <img src="{{ profile_user.profile_image.url }}" class="profile-avatar" alt="{{ profile_user.username }}">
+                            {% else %}
+                                 <img src="{% static 'profile_pics/default_profile.webp' %}" class="profile-avatar" alt="{{ profile_user.username }}">
+                            {% endif %}
+
                             <span>{{ post.user.username }}</span>
                         </div>
                         {% if profile_user == user %}
@@ -133,18 +111,12 @@
                     </div>
 
                     <p class="post-content">{{ post.content }}</p>
-                    {% if post.image %}
-                    <img src="{{ post.image.url }}" class="post-image">
-                    {% endif %}
-                    
+                    {% if post.image %}<img src="{{ post.image.url }}" class="post-image">{% endif %}
+
                     <div class="post-footer">
                         <div class="post-stats">
-                            <span class="likes">
-                                <i class="fas fa-heart"></i> {{ post.likes.count }}
-                            </span>
-                            <span class="comments">
-                                <i class="fas fa-comment"></i> {{ post.comments.count }}
-                            </span>
+                            <span class="likes"><i class="fas fa-heart"></i> {{ post.likes.count }}</span>
+                            <span class="comments"><i class="fas fa-comment"></i> {{ post.comments.count }}</span>
                         </div>
                         <div class="post-actions">
                             <a href="{% url 'post_detail' post.id %}" class="btn btn-view">
@@ -163,28 +135,19 @@
         </div>
     </div>
 
-    <!-- Empty Tab Contents (loaded via HTMX) -->
     <div id="likes" class="tab-content"></div>
     <div id="saved" class="tab-content"></div>
-    {% if profile_user == user %}
-    <div id="drafts" class="tab-content"></div>
-    {% endif %}
+    {% if profile_user == user %}<div id="drafts" class="tab-content"></div>{% endif %}
 </div>
 {% endblock %}
 
 {% block js %}
-<!-- Required Libraries -->
 <script src="https://unpkg.com/htmx.org@1.9.6"></script>
-<!-- Profile Interactions JS -->
 <script src="{% static 'js/profile.js' %}"></script>
-
-<!-- Initialize HTMX after load -->
 <script>
 document.body.addEventListener('htmx:afterProcessNode', function() {
-    // Reinitialize profile functionality for dynamically loaded content
     if (document.querySelector('.profile-container')) {
-        // Tab system is handled in profile.js
-        // Follow button is handled in profile.js
+        // JS reinitialization handled in profile.js
     }
 });
 </script>

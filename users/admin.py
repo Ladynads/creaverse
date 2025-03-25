@@ -4,17 +4,23 @@ from .models import CustomUser, InviteCode, Message, UserInteraction, Profile
 
 # Custom User Admin
 class CustomUserAdmin(UserAdmin):
-    list_display = ('username', 'email', 'bio', 'get_profile_image')
+    list_display = ('username', 'email', 'bio', 'get_profile_image', 'is_verified', 'is_active', 'is_staff')
+    list_filter = ('is_verified', 'is_active', 'is_staff')
+
     fieldsets = UserAdmin.fieldsets + (
         ("Profile Info", {"fields": ("bio", "profile_image")}),
+        ("Verification", {"fields": ("is_verified",)}),
     )
+
     add_fieldsets = UserAdmin.add_fieldsets + (
         ("Profile Info", {"fields": ("bio", "profile_image")}),
+        ("Verification", {"fields": ("is_verified",)}),
     )
-    
+
     def get_profile_image(self, obj):
         return obj.profile_image.url if obj.profile_image else "No image"
     get_profile_image.short_description = 'Profile Image'
+
 
 # Invite Code Admin
 class InviteCodeAdmin(admin.ModelAdmin):
