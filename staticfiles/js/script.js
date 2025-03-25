@@ -92,9 +92,10 @@ function setupFollowButtons() {
             
             const button = this;
             button.disabled = true;
-            button.style.transform = 'scale(0.95)';
+            button.style.transform = 'scale(0.95)';  // Optional: Add scaling effect when clicked
             
             try {
+                // Sending POST request to follow/unfollow the user
                 const response = await fetch(button.dataset.followUrl, {
                     method: 'POST',
                     headers: {
@@ -104,28 +105,31 @@ function setupFollowButtons() {
                     body: JSON.stringify({ user_id: button.dataset.userId })
                 });
                 
-                const data = await response.json();
+                const data = await response.json();  // Get the response JSON
+                
+                // Toggle the button state (following or not)
                 button.classList.toggle('following', data.is_following);
                 
+                // Update the button text and color based on follow state
                 button.innerHTML = data.is_following 
                     ? '<span class="check">✓</span> Following' 
                     : '+ Follow';
                 
                 button.style.backgroundColor = data.is_following 
-                    ? '#19A7CE' 
-                    : '#9743F4';
+                    ? '#19A7CE'  // Blue when following
+                    : '#9743F4';  // Purple when not following
                 
+                // Optionally update stats if a function is defined
                 if (typeof updateStats === 'function') updateStats();
             } catch (error) {
                 console.error('Follow error:', error);
             } finally {
-                button.style.transform = '';
-                button.disabled = false;
+                button.style.transform = '';  // Reset the scaling effect
+                button.disabled = false;  // Re-enable the button
             }
         });
     });
 }
-
 // Like buttons
 function setupLikeButtons() {
     document.querySelectorAll('.like-btn').forEach(btn => {

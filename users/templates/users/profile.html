@@ -2,21 +2,22 @@
 {% load static %}
 
 {% block css %}
-<link rel="stylesheet" href="{% static 'css/profile.css' %}">
+<link rel="stylesheet" href="{% static 'css/styles.css' %}">
 <!-- NEW: Animate.css for animations -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
 {% endblock %}
 
 {% block content %}
+
+<!-- Profile page -->
 <div class="profile-container">
-    <!-- NEW: Cover Photo Section -->
+    <!-- Cover Photo Section -->
     <div class="cover-photo" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
         {% if profile_user == user %}
         <button class="edit-cover-btn">✏️ Edit Cover</button>
         {% endif %}
     </div>
 
-    <!-- Enhanced Profile Header -->
     <div class="profile-header">
         <div class="profile-picture">
             {% if profile_user.profile_image %}
@@ -30,20 +31,22 @@
                      id="profile-avatar">
             {% endif %}
             
-            <!-- NEW: Online Status Badge -->
+            <!-- Online Status Badge -->
             <div class="status-badge {% if profile_user.is_online %}online{% else %}offline{% endif %}">
                 {{ profile_user.is_online|yesno:"Online,Offline" }}
             </div>
         </div>
-
+    
         <div class="profile-info">
             <div class="username-wrapper">
                 <h1 class="username glow-text">{{ profile_user.username }}</h1>
-                <!-- NEW: Verification Badge -->
                 {% if profile_user.is_verified %}
                 <span class="verified-badge" title="Verified User">✓</span>
                 {% endif %}
             </div>
+        </div>
+    </div>
+    
             
             <!-- NEW: Social Links -->
             <div class="social-links">
@@ -80,9 +83,9 @@
                     data-follow-url="{% url 'follow_toggle' username=profile_user.username %}"
                     data-csrf="{{ csrf_token }}">
                 {% if is_following %}
-                <span class="check">✓</span> Following
+                    <span class="check">✓</span> Following
                 {% else %}
-                + Follow
+                    + Follow
                 {% endif %}
             </button>
             {% endif %}

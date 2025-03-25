@@ -640,7 +640,9 @@ body {
 
 .profile-avatar:hover {
     transform: scale(1.05) rotate(5deg);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
 }
+
 
 .profile-info {
     padding: 80px 20px 20px;
@@ -1218,4 +1220,69 @@ body {
 
 .typing-dots span:nth-child(3) {
     animation-delay: 0.4s;
+}
+
+/* Privacy Policy Styling */
+.privacy-container {
+    max-width: 800px;
+    margin: 2rem auto;
+    padding: 0 1.5rem;
+    color: #333;
+}
+
+.privacy-title {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 600;
+    text-align: center;
+    margin-bottom: 2rem;
+    color: #2c3e50;
+}
+
+.privacy-section {
+    margin-bottom: 2.5rem;
+    padding: 1.5rem;
+    background: #f9f9f9;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.privacy-section h2 {
+    font-family: 'Poppins', sans-serif;
+    font-size: 1.4rem;
+    color: #3498db;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+}
+
+.privacy-icon {
+    margin-right: 10px;
+    color: #7f8c8d;
+}
+
+.privacy-section ul {
+    padding-left: 1.5rem;
+    line-height: 1.6;
+}
+
+.privacy-section li {
+    margin-bottom: 0.5rem;
+}
+
+.privacy-update {
+    text-align: center;
+    margin-top: 3rem;
+    color: #7f8c8d;
+    font-size: 0.9rem;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+    .privacy-container {
+        padding: 0 1rem;
+    }
+    
+    .privacy-section {
+        padding: 1rem;
+    }
 }
