@@ -32,7 +32,7 @@ function initMessageSearch() {
 // REAL-TIME MESSAGING
 // ========================
 
-let messagePollInterval;
+var messagePollInterval;
 let currentThreadId = null;
 
 function setupMessagePolling() {

@@ -128,6 +128,43 @@ function $$(selector, parent = document) {
     return Array.from(parent.querySelectorAll(selector));
 }
 
+//Creator Carousel//
+document.addEventListener('DOMContentLoaded', function() {
+    // Featured Creators Carousel
+    const featuredCarousel = document.querySelector('.featured-carousel');
+    if (featuredCarousel) {
+        let isDown = false;
+        let startX;
+        let scrollLeft;
+
+        featuredCarousel.addEventListener('mousedown', (e) => {
+            isDown = true;
+            startX = e.pageX - featuredCarousel.offsetLeft;
+            scrollLeft = featuredCarousel.scrollLeft;
+            featuredCarousel.style.cursor = 'grabbing';
+        });
+
+        featuredCarousel.addEventListener('mouseleave', () => {
+            isDown = false;
+            featuredCarousel.style.cursor = 'grab';
+        });
+
+        featuredCarousel.addEventListener('mouseup', () => {
+            isDown = false;
+            featuredCarousel.style.cursor = 'grab';
+        });
+
+        featuredCarousel.addEventListener('mousemove', (e) => {
+            if (!isDown) return;
+            e.preventDefault();
+            const x = e.pageX - featuredCarousel.offsetLeft;
+            const walk = (x - startX) * 2;
+            featuredCarousel.scrollLeft = scrollLeft - walk;
+        });
+    }
+
+});
+
 // ========================
 // INITIALIZATION
 // ========================

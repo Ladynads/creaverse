@@ -1,6 +1,11 @@
 {% extends 'base.html' %}
 {% load static %}
 
+{% block css %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'css/styles.css' %}">
+{% endblock %}
+
 {% block content %}
 <section class="hero-section">
     <div class="hero-content">
@@ -41,7 +46,6 @@
         <li><i class="fas fa-users"></i> Connect with Creators</li>
         <li><i class="fas fa-image"></i> Share Your Work</li>
         <li><i class="fas fa-cogs"></i> Collaboration Tools</li>
-        <li><i class="fas fa-search"></i> Discover Endless Inspiration</li>
     </ul>
 </section>
 
@@ -85,7 +89,7 @@
     </div>
 </section>
 
-<!-- Testimonials Section - Enhanced with Carousel -->
+<!-- Testimonials Section -->
 <section class="testimonials">
     <h2 class="section-title"><i class="fas fa-quote-left"></i> What Our Creators Say</h2>
     <div class="testimonial-carousel">
@@ -108,6 +112,10 @@
 </section>
 {% endblock %}
 
+{% block js %}
+{{ block.super }}
+<script src="{% static 'js/script.js' %}"></script>
+{% endblock %}
 
 
 

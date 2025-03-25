@@ -1,75 +1,12 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block content %}
-<div class="profile-edit-container">
-    <h2 class="edit-header">✏ Edit Profile</h2>
-    
-    <form method="POST" enctype="multipart/form-data" class="profile-edit-form">
-        {% csrf_token %}
-        
-        <!-- User Information Section -->
-        <div class="form-section">
-            <h3 class="section-title">Basic Information</h3>
-            
-            <div class="form-group">
-                <label for="id_username">Username:</label>
-                <input type="text" id="id_username" name="username" value="{{ user.username }}" class="form-control" required>
-            </div>
-            
-            <div class="form-group">
-                <label for="id_email">Email:</label>
-                <input type="email" id="id_email" name="email" value="{{ user.email }}" class="form-control" required>
-            </div>
-            
-            <div class="form-group">
-                <label for="id_bio">Bio:</label>
-                <textarea id="id_bio" name="bio" class="form-control" maxlength="500">{{ user.bio }}</textarea>
-                <small class="char-count">500 characters remaining</small>
-            </div>
-        </div>
-        
-        <!-- Profile Images Section -->
-        <div class="form-section">
-            <h3 class="section-title">Profile Images</h3>
-            
-            <div class="form-group">
-                <label for="id_profile_image">Profile Picture:</label>
-                <input type="file" id="id_profile_image" name="profile_image" class="form-control-file" accept="image/*">
-                {% if user.profile_image %}
-                <div class="current-image-preview">
-                    <img src="{{ user.profile_image.url }}" alt="Current profile image" class="img-thumbnail">
-                    <small>Current profile picture</small>
-                </div>
-                {% endif %}
-            </div>
-            
-            <div class="form-group">
-                <label for="id_cover_image">Cover Photo:</label>
-                <input type="file" id="id_cover_image" name="cover_image" class="form-control-file" accept="image/*">
-                {% if has_cover_image %}
-                <div class="current-image-preview">
-                    <img src="{{ user.profile.cover_image.url }}" alt="Current cover photo" class="img-thumbnail">
-                    <small>Current cover photo</small>
-                </div>
-                {% endif %}
-            </div>
-        </div>
-        
-        <!-- Social Links Section -->
-        <div class="form-section">
-            <h3 class="section-title">Social Links</h3>
-            <!-- Add your social links fields here if needed -->
-        </div>
-        
-        <div class="form-actions">
-            <button type="submit" class="btn btn-primary">Save Changes</button>
-            <a href="{% url 'profile' user.username %}" class="btn btn-secondary">Cancel</a>
-        </div>
-    </form>
-</div>
-
+{% block css %}
+<link rel="stylesheet" href="{% static 'css/styles.css' %}">
+<link rel="stylesheet" href="{% static 'css/profile.css' %}">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <style>
+    /* Profile Edit Specific Styles */
     .profile-edit-container {
         max-width: 800px;
         margin: 2rem auto;
@@ -81,19 +18,25 @@
     
     .edit-header {
         margin-bottom: 2rem;
-        color: #6a11cb;
+        color: var(--primary-color);
+        display: flex;
+        align-items: center;
+        gap: 10px;
     }
     
     .form-section {
         margin-bottom: 2rem;
         padding-bottom: 1.5rem;
-        border-bottom: 1px solid #eee;
+        border-bottom: 1px solid var(--border-color);
     }
     
     .section-title {
         margin-bottom: 1.5rem;
         font-size: 1.2rem;
-        color: #6a11cb;
+        color: var(--primary-color);
+        display: flex;
+        align-items: center;
+        gap: 8px;
     }
     
     .form-group {
@@ -102,20 +45,55 @@
     
     .form-control {
         width: 100%;
-        padding: 0.5rem;
-        border: 1px solid #ddd;
-        border-radius: 4px;
+        padding: 0.75rem;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        transition: all 0.3s ease;
+    }
+    
+    .form-control:focus {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 3px rgba(106, 17, 203, 0.1);
+    }
+    
+    .custom-file-upload {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-top: 8px;
+    }
+    
+    .file-label {
+        padding: 0.5rem 1rem;
+        background: var(--light-bg);
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    
+    .file-label:hover {
+        background: var(--border-color);
+    }
+    
+    .file-name {
+        color: var(--text-muted);
     }
     
     .current-image-preview {
         margin-top: 1rem;
     }
     
-    .current-image-preview img {
+    .current-image {
         max-width: 200px;
         max-height: 200px;
         display: block;
+        border-radius: 8px;
         margin-bottom: 0.5rem;
+    }
+    
+    .image-actions {
+        display: flex;
+        gap: 10px;
     }
     
     .form-actions {
@@ -125,39 +103,280 @@
     }
     
     .btn {
-        padding: 0.5rem 1.5rem;
-        border-radius: 4px;
-        text-decoration: none;
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        font-weight: 500;
+        transition: all 0.2s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
     }
     
     .btn-primary {
-        background: #6a11cb;
+        background: var(--primary-color);
         color: white;
         border: none;
     }
     
+    .btn-primary:hover {
+        background: var(--primary-dark);
+        transform: translateY(-2px);
+    }
+    
     .btn-secondary {
-        background: #f1f1f1;
-        color: #333;
-        border: 1px solid #ddd;
+        background: var(--light-bg);
+        color: var(--text-color);
+        border: 1px solid var(--border-color);
+    }
+    
+    .btn-secondary:hover {
+        background: var(--border-color);
+    }
+    
+    .input-group {
+        display: flex;
+    }
+    
+    .input-group-text {
+        padding: 0.75rem;
+        background: var(--light-bg);
+        border: 1px solid var(--border-color);
+        border-right: none;
+        border-radius: 8px 0 0 8px;
+        font-size: 0.9rem;
+    }
+    
+    .input-group .form-control {
+        border-radius: 0 8px 8px 0;
+    }
+    
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+        .profile-edit-container {
+            padding: 1.5rem;
+            margin: 1rem;
+        }
+        
+        .form-actions {
+            flex-direction: column;
+        }
+        
+        .btn {
+            width: 100%;
+            justify-content: center;
+        }
     }
 </style>
+{% endblock %}
 
-<script>
-    // Character counter for bio
-    document.addEventListener('DOMContentLoaded', function() {
-        const bioField = document.getElementById('id_bio');
-        const charCount = document.querySelector('.char-count');
+{% block content %}
+<div class="profile-edit-container animate__animated animate__fadeIn">
+    <h2 class="edit-header">
+        <i class="fas fa-user-edit"></i> Edit Profile
+    </h2>
+    
+    <form method="POST" enctype="multipart/form-data" class="profile-edit-form" id="profileEditForm">
+        {% csrf_token %}
         
-        if (bioField && charCount) {
-            function updateCharCount() {
-                const remaining = 500 - bioField.value.length;
-                charCount.textContent = `${remaining} characters remaining`;
-            }
+        <!-- User Information Section -->
+        <div class="form-section">
+            <h3 class="section-title">
+                <i class="fas fa-info-circle"></i> Basic Information
+            </h3>
             
-            bioField.addEventListener('input', updateCharCount);
-            updateCharCount(); // Initialize count
+            <div class="form-group">
+                <label for="id_username">
+                    <i class="fas fa-user"></i> Username:
+                </label>
+                <input type="text" id="id_username" name="username" 
+                       value="{{ user.username }}" class="form-control" required
+                       pattern="[a-zA-Z0-9_]+" title="Only letters, numbers and underscores">
+                <small class="form-text">Letters, numbers and underscores only</small>
+            </div>
+            
+            <div class="form-group">
+                <label for="id_email">
+                    <i class="fas fa-envelope"></i> Email:
+                </label>
+                <input type="email" id="id_email" name="email" 
+                       value="{{ user.email }}" class="form-control" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="id_bio">
+                    <i class="fas fa-pencil-alt"></i> Bio:
+                </label>
+                <textarea id="id_bio" name="bio" class="form-control" 
+                          maxlength="500" rows="4">{{ user.bio }}</textarea>
+                <div class="d-flex justify-content-between">
+                    <small class="char-count text-muted">500 characters remaining</small>
+                    <small class="text-muted">Markdown supported</small>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Profile Images Section -->
+        <div class="form-section">
+            <h3 class="section-title">
+                <i class="fas fa-images"></i> Profile Images
+            </h3>
+            
+            <div class="form-group">
+                <label for="id_profile_image">
+                    <i class="fas fa-user-circle"></i> Profile Picture:
+                </label>
+                <div class="custom-file-upload">
+                    <input type="file" id="id_profile_image" name="profile_image" 
+                           class="form-control-file" accept="image/*">
+                    <label for="id_profile_image" class="file-label">
+                        <i class="fas fa-cloud-upload-alt"></i> Choose File
+                    </label>
+                    <span class="file-name" id="profileFileName">No file chosen</span>
+                </div>
+                
+                {% if user.profile_image %}
+                <div class="current-image-preview mt-3">
+                    <img src="{{ user.profile_image.url }}" alt="Current profile image" 
+                         class="img-thumbnail current-image">
+                    <div class="image-actions mt-2">
+                        <button type="button" class="btn btn-sm btn-outline-danger" id="removeProfileImage">
+                            <i class="fas fa-trash"></i> Remove
+                        </button>
+                        <input type="hidden" name="remove_profile_image" id="removeProfileImageFlag" value="false">
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+            
+            <div class="form-group">
+                <label for="id_cover_image">
+                    <i class="fas fa-image"></i> Cover Photo:
+                </label>
+                <div class="custom-file-upload">
+                    <input type="file" id="id_cover_image" name="cover_image" 
+                           class="form-control-file" accept="image/*">
+                    <label for="id_cover_image" class="file-label">
+                        <i class="fas fa-cloud-upload-alt"></i> Choose File
+                    </label>
+                    <span class="file-name" id="coverFileName">No file chosen</span>
+                </div>
+                
+                {% if has_cover_image %}
+                <div class="current-image-preview mt-3">
+                    <img src="{{ user.profile.cover_image.url }}" alt="Current cover photo" 
+                         class="img-thumbnail current-image">
+                    <div class="image-actions mt-2">
+                        <button type="button" class="btn btn-sm btn-outline-danger" id="removeCoverImage">
+                            <i class="fas fa-trash"></i> Remove
+                        </button>
+                        <input type="hidden" name="remove_cover_image" id="removeCoverImageFlag" value="false">
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Social Links Section -->
+        <div class="form-section">
+            <h3 class="section-title">
+                <i class="fas fa-share-alt"></i> Social Links
+            </h3>
+            
+            <div class="form-group">
+                <label for="id_twitter">
+                    <i class="fab fa-twitter"></i> Twitter:
+                </label>
+                <div class="input-group">
+                    <div class="input-group-prepend">
+                        <span class="input-group-text">https://twitter.com/</span>
+                    </div>
+                    <input type="text" id="id_twitter" name="twitter" 
+                           value="{{ user.social_links.twitter }}" class="form-control">
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="id_instagram">
+                    <i class="fab fa-instagram"></i> Instagram:
+                </label>
+                <div class="input-group">
+                    <div class="input-group-prepend">
+                        <span class="input-group-text">https://instagram.com/</span>
+                    </div>
+                    <input type="text" id="id_instagram" name="instagram" 
+                           value="{{ user.social_links.instagram }}" class="form-control">
+                </div>
+            </div>
+        </div>
+        
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary btn-save">
+                <i class="fas fa-save"></i> Save Changes
+            </button>
+            <a href="{% url 'profile' user.username %}" class="btn btn-secondary">
+                <i class="fas fa-times"></i> Cancel
+            </a>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Character counter for bio
+    const bioField = document.getElementById('id_bio');
+    const charCount = document.querySelector('.char-count');
+    
+    if (bioField && charCount) {
+        function updateCharCount() {
+            const remaining = 500 - bioField.value.length;
+            charCount.textContent = `${remaining} characters remaining`;
         }
-    });
+        
+        bioField.addEventListener('input', updateCharCount);
+        updateCharCount(); // Initialize count
+    }
+
+    // File upload display
+    const profileInput = document.getElementById('id_profile_image');
+    const coverInput = document.getElementById('id_cover_image');
+    
+    if (profileInput) {
+        profileInput.addEventListener('change', function(e) {
+            const fileName = e.target.files[0]?.name || 'No file chosen';
+            document.getElementById('profileFileName').textContent = fileName;
+        });
+    }
+    
+    if (coverInput) {
+        coverInput.addEventListener('change', function(e) {
+            const fileName = e.target.files[0]?.name || 'No file chosen';
+            document.getElementById('coverFileName').textContent = fileName;
+        });
+    }
+
+    // Image removal toggles
+    const removeProfileBtn = document.getElementById('removeProfileImage');
+    const removeCoverBtn = document.getElementById('removeCoverImage');
+    
+    if (removeProfileBtn) {
+        removeProfileBtn.addEventListener('click', function() {
+            const flag = document.getElementById('removeProfileImageFlag');
+            flag.value = flag.value === 'false' ? 'true' : 'false';
+            this.classList.toggle('btn-danger');
+            this.classList.toggle('btn-outline-danger');
+        });
+    }
+    
+    if (removeCoverBtn) {
+        removeCoverBtn.addEventListener('click', function() {
+            const flag = document.getElementById('removeCoverImageFlag');
+            flag.value = flag.value === 'false' ? 'true' : 'false';
+            this.classList.toggle('btn-danger');
+            this.classList.toggle('btn-outline-danger');
+        });
+    }
+});
 </script>
 {% endblock %}

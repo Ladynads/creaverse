@@ -14,7 +14,7 @@ from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.conf import settings
 from django.db.models import Q, Count, F, Prefetch
 from django.utils import timezone
-from django.views.generic import ListView, DetailView, CreateView, UpdateView
+from django.views.generic import TemplateView, ListView, DetailView, CreateView, UpdateView
 from django.db import transaction
 
 # Forms & Models
@@ -52,6 +52,8 @@ def user_stats_view(request, username):
 # ===== Authentication Views =====
 def register(request):
     """Invite-only registration with optimized queries"""
+    form = CustomUserCreationForm()  # Initialize the form here
+
     if request.method == "POST":
         form = CustomUserCreationForm(request.POST, request.FILES)
         invite_code = request.POST.get("invite_code")
@@ -67,7 +69,8 @@ def register(request):
             login(request, user)
             return JsonResponse({'success': True})
 
-    return render(request, 'users/register.html', {'form': form or CustomUserCreationForm()})
+    return render(request, 'users/register.html', {'form': form})
+
 
 class CustomLoginView(LoginView):
     template_name = 'users/login.html'

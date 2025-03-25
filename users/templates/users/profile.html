@@ -3,12 +3,14 @@
 
 {% block css %}
 <link rel="stylesheet" href="{% static 'css/styles.css' %}">
-<!-- NEW: Animate.css for animations -->
+<link rel="stylesheet" href="{% static 'css/profile.css' %}">
+<!-- Animate.css for animations -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+<!-- Font Awesome -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 {% endblock %}
 
 {% block content %}
-
 <!-- Profile page -->
 <div class="profile-container">
     <!-- Cover Photo Section -->
@@ -25,6 +27,7 @@
                      class="profile-img animate__animated animate__fadeIn" 
                      id="profile-avatar">
             {% else %}
+            
                 <img src="{% static 'profile_pics/default_profile.webp' %}" 
                      alt="Default Profile Image" 
                      class="profile-img animate__animated animate__fadeIn"
@@ -44,11 +47,8 @@
                 <span class="verified-badge" title="Verified User">✓</span>
                 {% endif %}
             </div>
-        </div>
-    </div>
-    
-            
-            <!-- NEW: Social Links -->
+
+            <!-- Social Links -->
             <div class="social-links">
                 {% if profile_user.social_links.twitter %}
                 <a href="{{ profile_user.social_links.twitter }}" target="_blank"><i class="fab fa-twitter"></i></a>
@@ -76,7 +76,7 @@
                 </div>
             </div>
 
-            <!-- NEW: Follow Button with Animation -->
+            <!-- Follow Button -->
             {% if profile_user != user %}
             <button class="follow-btn {% if is_following %}following{% endif %}" 
                     data-user-id="{{ profile_user.id }}"
@@ -92,7 +92,7 @@
         </div>
     </div>
 
-    <!-- NEW: Interactive Tabs -->
+    <!-- Interactive Tabs -->
     <nav class="profile-tabs">
         <button class="tab-btn active" data-tab="posts">Posts</button>
         <button class="tab-btn" data-tab="likes">Likes</button>
@@ -102,7 +102,7 @@
         {% endif %}
     </nav>
 
-    <!-- Posts Section (Now Tabbed) -->
+    <!-- Posts Section -->
     <div id="posts" class="tab-content active">
         {% if profile_user == user %}
         <div class="create-post">
@@ -116,11 +116,9 @@
             <div class="post-grid">
                 {% for post in user_posts %}
                 <div class="post-card animate__animated animate__fadeInUp">
-                    <!-- NEW: Post Header with Menu -->
                     <div class="post-header">
                         <div class="post-author">
-                            <img src="{{ post.user.profile_image.url|default:'{% static "profile_pics/default_profile.webp" %}' }}" 
-                                 class="post-author-img">
+                            <img src="{{ user.get_profile_image }}" class="profile-avatar" alt="{{ user.username }}">
                             <span>{{ post.user.username }}</span>
                         </div>
                         {% if profile_user == user %}
@@ -165,7 +163,7 @@
         </div>
     </div>
 
-    <!-- NEW: Empty Tab Contents (Will be loaded via HTMX) -->
+    <!-- Empty Tab Contents (loaded via HTMX) -->
     <div id="likes" class="tab-content"></div>
     <div id="saved" class="tab-content"></div>
     {% if profile_user == user %}
@@ -175,59 +173,18 @@
 {% endblock %}
 
 {% block js %}
-<!-- NEW: Required Libraries -->
-<script src="https://kit.fontawesome.com/your-code.js" crossorigin="anonymous"></script>
+<!-- Required Libraries -->
 <script src="https://unpkg.com/htmx.org@1.9.6"></script>
-
-<!-- NEW: Profile Interactions JS -->
+<!-- Profile Interactions JS -->
 <script src="{% static 'js/profile.js' %}"></script>
 
+<!-- Initialize HTMX after load -->
 <script>
-// NEW: Tab System
-document.querySelectorAll('.tab-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-        // Remove active class from all
-        document.querySelectorAll('.tab-btn, .tab-content').forEach(el => {
-            el.classList.remove('active');
-        });
-        
-        // Add to clicked tab
-        btn.classList.add('active');
-        const tabId = btn.dataset.tab;
-        document.getElementById(tabId).classList.add('active');
-        
-        // Load content via HTMX if empty
-        if(document.getElementById(tabId).innerHTML === '') {
-            htmx.ajax('GET', `/profile/{{ profile_user.username }}/${tabId}/`, `#${tabId}`);
-        }
-    });
-});
-
-// NEW: Follow Button AJAX
-document.querySelector('.follow-btn')?.addEventListener('click', async function() {
-    const btn = this;
-    const formData = new FormData();
-    formData.append('user_id', btn.dataset.userId);
-    formData.append('csrfmiddlewaretoken', btn.dataset.csrf);
-    
-    try {
-        const response = await fetch(btn.dataset.followUrl, {
-            method: 'POST',
-            body: formData
-        });
-        
-        if(response.ok) {
-            const data = await response.json();
-            btn.classList.toggle('following');
-            btn.innerHTML = data.is_following 
-                ? '<span class="check">✓</span> Following' 
-                : '+ Follow';
-            
-            // Update stats
-            htmx.trigger('.stats', 'refresh');
-        }
-    } catch(error) {
-        console.error('Error:', error);
+document.body.addEventListener('htmx:afterProcessNode', function() {
+    // Reinitialize profile functionality for dynamically loaded content
+    if (document.querySelector('.profile-container')) {
+        // Tab system is handled in profile.js
+        // Follow button is handled in profile.js
     }
 });
 </script>

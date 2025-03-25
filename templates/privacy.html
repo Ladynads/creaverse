@@ -1,45 +1,34 @@
 {% extends 'base.html' %}
-
-{% block title %}Privacy Policy - CreatorVerse{% endblock %}
+{% load static %}
 
 {% block content %}
 <div class="privacy-container">
-    <h1 class="privacy-title">Privacy Policy</h1>
+    <h1><i class="fas fa-shield-alt"></i> Privacy Policy</h1>
     
     <div class="privacy-section">
-        <h2><i class="fas fa-shield-alt privacy-icon"></i> Information Collection</h2>
-        <p>We collect information when you register, create content, or interact with others on CreatorVerse. This includes:</p>
+        <h2>Data Collection</h2>
+        <p>We collect the following information when you use CreatorVerse:</p>
         <ul>
-            <li>Account details (username, email)</li>
-            <li>Profile information (bio, links)</li>
-            <li>Content you create (posts, messages)</li>
-            <li>Usage data via cookies</li>
+            <li>Account registration details</li>
+            <li>Content you upload</li>
+            <li>Usage analytics</li>
+            <li>Device information</li>
         </ul>
     </div>
 
     <div class="privacy-section">
-        <h2><i class="fas fa-lock privacy-icon"></i> Data Protection</h2>
-        <p>We implement security measures including:</p>
+        <h2>How We Use Your Data</h2>
+        <p>Your information helps us:</p>
         <ul>
-            <li>Encryption of sensitive data</li>
-            <li>Regular security audits</li>
-            <li>Limited access to personal information</li>
-        </ul>
-        <p>Despite these measures, no online service is 100% secure.</p>
-    </div>
-
-    <div class="privacy-section">
-        <h2><i class="fas fa-exchange-alt privacy-icon"></i> Data Sharing</h2>
-        <p>We <strong>do not sell</strong> your personal data. Information may be shared with:</p>
-        <ul>
-            <li>Service providers (hosting, analytics)</li>
-            <li>Legal authorities when required</li>
-            <li>Other users as per your privacy settings</li>
+            <li>Provide and improve our services</li>
+            <li>Personalize your experience</li>
+            <li>Communicate with you</li>
+            <li>Ensure platform security</li>
         </ul>
     </div>
 
     <div class="privacy-section">
-        <h2><i class="fas fa-cog privacy-icon"></i> Your Rights</h2>
+        <h2>Your Rights</h2>
         <p>You can:</p>
         <ul>
             <li>Access or delete your data</li>
@@ -51,7 +40,12 @@
 
     <div class="privacy-update">
         <p><i class="fas fa-history"></i> Last updated: {% now "F j, Y" %}</p>
-        <p>Questions? <a href="{% url 'contact' %}">Contact us</a></p>
+        {% url 'contact' as contact_url %}
+        {% if contact_url %}
+            <p>Questions? <a href="{{ contact_url }}">Contact us</a></p>
+        {% else %}
+            <p>Questions? <a href="mailto:privacy@creativerse.example">Email our privacy team</a></p>
+        {% endif %}
     </div>
 </div>
 {% endblock %}

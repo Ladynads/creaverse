@@ -4,7 +4,7 @@
 <section class="feed-section">
     <h1 class="feed-title"> CreatorVerse Feed</h1>
 
-    <!-- ✅ Create Post Form (Inline) -->
+    <!-- Create Post Form (Inline) -->
     {% if user.is_authenticated %}
     <form method="POST" action="{% url 'new_post' %}" class="create-post-form">
         {% csrf_token %}
@@ -13,7 +13,7 @@
     </form>
     {% endif %}
 
-    <!-- ✅ Display Posts in a Grid -->
+    <!-- Display Posts in a Grid -->
     <div class="feed-grid">
         {% for post in posts %}
         <div class="post-card">
@@ -22,7 +22,7 @@
                 <img src="{{ post.user.profile_image.url }}" alt="{{ post.user.username }}" class="post-avatar">
                 <div class="post-user">
                     <strong>
-                        <a href="{% url 'profile' username=post.user.username %}" class="username">  <!-- Fixed -->
+                        <a href="{% url 'profile' username=post.user.username %}" class="username">
                             {{ post.user.username }}
                         </a>
                     </strong>
@@ -33,7 +33,7 @@
             <!-- Post Content -->
             <p class="post-content">{{ post.content }}</p>
 
-            <!-- ✅ Like Button (AJAX) -->
+            <!-- Like Button (AJAX) -->
             <div class="post-actions">
                 <button class="like-btn" data-post-id="{{ post.id }}">
                     {% if user in post.likes.all %}
@@ -44,10 +44,11 @@
                     <span id="like-count-{{ post.id }}">{{ post.likes.count }}</span>
                 </button>
 
-                <!-- ✅ Comment Button -->
-                <button class="comment-btn" onclick="toggleComments('{{ post.id }}')">💬 {{ post.comments.count }}</button>
+                <!-- Comment Button -->
+                <button class="comment-btn" data-post-id="{{ post.id }}">💬 {{ post.comments.count }}</button>
 
-                <!-- ✅ Delete Post Button (Only for Post Owner) -->
+
+                <!-- Delete Post Button (Only for Post Owner) -->
                 {% if post.user == user %}
                 <form action="{% url 'delete_post' post.id %}" method="POST" class="delete-form">
                     {% csrf_token %}
@@ -56,14 +57,14 @@
                 {% endif %}
             </div>
 
-            <!-- ✅ Comments Section -->
+            <!-- Comments Section -->
             <div id="comments-{{ post.id }}" class="comments-section" style="display: none;">
                 <h4>💬 Comments:</h4>
                 <ul id="comment-list-{{ post.id }}">
                     {% for comment in post.comments.all %}
                     <li class="comment-item">
                         <strong>
-                            <a href="{% url 'profile' username=comment.user.username %}" class="username">  <!-- Fixed -->
+                            <a href="{% url 'profile' username=comment.user.username %}" class="username">  
                                 {{ comment.user.username }}
                             </a>
                         </strong>: {{ comment.content }}
@@ -79,7 +80,7 @@
                     {% endfor %}
                 </ul>
 
-                <!-- ✅ Add Comment Form (AJAX) -->
+                <!-- Add Comment Form (AJAX) -->
                 {% if user.is_authenticated %}
                 <form class="comment-form" data-post-id="{{ post.id }}">
                     {% csrf_token %}
@@ -95,113 +96,161 @@
     </div>
 </section>
 
-<!-- ✅ JavaScript for AJAX Like & Comment System -->
+<!-- JavaScript for AJAX Like & Comment System -->
+
 <script>
-document.addEventListener("DOMContentLoaded", function () {
-    // ✅ Function to Toggle Comments
+    //  Make toggleComments globally accessible
     function toggleComments(postId) {
         const commentsSection = document.getElementById(`comments-${postId}`);
-        commentsSection.style.display = commentsSection.style.display === "none" ? "block" : "none";
+        if (commentsSection) {
+            commentsSection.style.display =
+                commentsSection.style.display === "none" ? "block" : "none";
+        }
     }
 
-    // ✅ Function to Refresh Feed without Reloading
-    function refreshFeed() {
-        fetch("{% url 'feed' %}")  // Fetch fresh posts from the backend
-        .then(response => response.text())
-        .then(html => {
-            let parser = new DOMParser();
-            let doc = parser.parseFromString(html, "text/html");
-            let newPosts = doc.querySelector(".feed-grid").innerHTML;  // Get updated posts list
-            document.querySelector(".feed-grid").innerHTML = newPosts;  // Replace old posts with new ones
-            attachLikeHandlers();  // Reattach event listeners
-            attachCommentHandlers();
-        })
-        .catch(error => console.error("Error fetching feed:", error));
-    }
-
-    // ✅ AJAX for Likes
-    function attachLikeHandlers() {
-        document.querySelectorAll(".like-btn").forEach(button => {
-            button.addEventListener("click", function () {
-                let postId = this.dataset.postId;
-                let url = `{% url 'like_post' 999999 %}`.replace('999999', postId); // ✅ Dynamic URL
-
-                fetch(url, {
-                    method: "POST",
-                    headers: {
-                        "X-CSRFToken": getCookie("csrftoken"),
-                        "Content-Type": "application/json"
-                    }
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.liked) {
-                        this.innerHTML = `❤️ <span id="like-count-${postId}">${data.total_likes}</span>`;
-                    } else {
-                        this.innerHTML = `🤍 <span id="like-count-${postId}">${data.total_likes}</span>`;
-                    }
-                    refreshFeed();  // Refresh feed after like
-                })
-                .catch(error => console.error("Error:", error));
-            });
+    document.addEventListener("DOMContentLoaded", function () {
+        // ================================
+        // Detect typing inside comments
+        // ================================
+        let isTyping = false;
+        document.addEventListener("input", function (e) {
+            if (e.target.closest(".comment-form")) {
+                isTyping = true;
+                clearTimeout(window.typingTimeout);
+                window.typingTimeout = setTimeout(() => {
+                    isTyping = false;
+                }, 5000); // User stopped typing after 5s
+            }
         });
-    }
 
-    // ✅ AJAX for Comments
-    function attachCommentHandlers() {
-        document.querySelectorAll(".comment-form").forEach(form => {
-            form.addEventListener("submit", function (event) {
-                event.preventDefault();  // ✅ Prevent default form submission
-                let postId = this.dataset.postId;
-                let url = `{% url 'add_comment' 999999 %}`.replace('999999', postId);
-                let formData = new FormData(this);
-                
-                fetch(url, {
-                    method: "POST",
-                    headers: { "X-CSRFToken": getCookie("csrftoken") },
-                    body: formData
+        // ================================
+        // Refresh Feed if NOT typing
+        // ================================
+        function refreshFeed() {
+            fetch("{% url 'feed' %}")
+                .then(response => response.text())
+                .then(html => {
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(html, "text/html");
+                    const newPosts = doc.querySelector(".feed-grid").innerHTML;
+                    document.querySelector(".feed-grid").innerHTML = newPosts;
+                    attachLikeHandlers();
+                    attachCommentHandlers();
+                    attachToggleHandlers();
                 })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        let commentList = document.querySelector(`#comment-list-${postId}`);
-                        let newComment = document.createElement("li");
-                        newComment.innerHTML = `<strong><a href="/users/${data.username}">${data.username}</a></strong>: ${data.comment}`;
-                        commentList.appendChild(newComment);
-                        this.reset();  // ✅ Clear input after submission
-                        refreshFeed();  // Refresh feed after comment
-                    }
-                })
-                .catch(error => console.error("Error:", error));
+                .catch(error => console.error("Error fetching feed:", error));
+        }
+
+        setInterval(() => {
+            if (!isTyping) {
+                refreshFeed();
+            }
+        }, 10000); // Every 10s if not typing
+
+        // ================================
+        // AJAX Likes
+        // ================================
+        function attachLikeHandlers() {
+            document.querySelectorAll(".like-btn").forEach(button => {
+                button.addEventListener("click", function () {
+                    const postId = this.dataset.postId;
+                    const url = `{% url 'like_post' 999999 %}`.replace('999999', postId);
+
+                    fetch(url, {
+                        method: "POST",
+                        headers: {
+                            "X-CSRFToken": getCookie("csrftoken"),
+                            "Content-Type": "application/json"
+                        }
+                    })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.liked) {
+                                this.innerHTML = `❤️ <span id="like-count-${postId}">${data.new_like_count}</span>`;
+                            } else {
+                                this.innerHTML = `🤍 <span id="like-count-${postId}">${data.new_like_count}</span>`;
+                            }
+                            refreshFeed();
+                        })
+                        .catch(error => console.error("Like Error:", error));
+                });
             });
-        });
-    }
+        }
 
-    // ✅ Function to get CSRF token
-    function getCookie(name) {
-        let cookieValue = null;
-        if (document.cookie && document.cookie !== "") {
-            let cookies = document.cookie.split(";");
-            for (let i = 0; i < cookies.length; i++) {
-                let cookie = cookies[i].trim();
-                if (cookie.startsWith(name + "=")) {
-                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                    break;
+        // ================================
+        // AJAX Comments
+        // ================================
+        function attachCommentHandlers() {
+            document.querySelectorAll(".comment-form").forEach(form => {
+                form.addEventListener("submit", function (event) {
+                    event.preventDefault();
+                    const postId = this.dataset.postId;
+                    const url = `{% url 'add_comment' 999999 %}`.replace('999999', postId);
+                    const formData = new FormData(this);
+
+                    fetch(url, {
+                        method: "POST",
+                        headers: {
+                            "X-CSRFToken": getCookie("csrftoken")
+                        },
+                        body: formData
+                    })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                const commentList = document.querySelector(`#comment-list-${postId}`);
+                                const emptyMsg = commentList.querySelector(".no-comments");
+                                if (emptyMsg) emptyMsg.remove();
+
+                                const newComment = document.createElement("li");
+                                newComment.innerHTML = `<strong><a href="/profile/${data.username}">${data.username}</a></strong>: ${data.comment_text}`;
+                                commentList.appendChild(newComment);
+                                this.reset();
+                            }
+                        })
+                        .catch(error => console.error("Comment Error:", error));
+                });
+            });
+        }
+
+        // ================================
+        // Toggle Comments on Button Click
+        // ================================
+        function attachToggleHandlers() {
+            document.querySelectorAll(".comment-btn").forEach(button => {
+                button.addEventListener("click", () => {
+                    const postId = button.dataset.postId;
+                    toggleComments(postId);
+                });
+            });
+        }
+
+        // Get CSRF token from cookie
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== "") {
+                const cookies = document.cookie.split(";");
+                for (let cookie of cookies) {
+                    cookie = cookie.trim();
+                    if (cookie.startsWith(name + "=")) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
                 }
             }
+            return cookieValue;
         }
-        return cookieValue;
-    }
 
-    // ✅ Auto-refresh every 10 seconds 
-    setInterval(refreshFeed, 10000);  
-
-    attachLikeHandlers();  // Attach like event listeners on page load
-    attachCommentHandlers();  // Attach comment event listeners on page load
-});
+        //  Init everything on page load
+        attachLikeHandlers();
+        attachCommentHandlers();
+        attachToggleHandlers();
+    });
 </script>
 
+
 {% endblock %}
+
 
 
 
