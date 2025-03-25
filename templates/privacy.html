@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+
+{% block title %}Privacy Policy - CreatorVerse{% endblock %}
+
+{% block content %}
+<div class="privacy-container">
+    <h1 class="privacy-title">Privacy Policy</h1>
+    
+    <div class="privacy-section">
+        <h2><i class="fas fa-shield-alt privacy-icon"></i> Information Collection</h2>
+        <p>We collect information when you register, create content, or interact with others on CreatorVerse. This includes:</p>
+        <ul>
+            <li>Account details (username, email)</li>
+            <li>Profile information (bio, links)</li>
+            <li>Content you create (posts, messages)</li>
+            <li>Usage data via cookies</li>
+        </ul>
+    </div>
+
+    <div class="privacy-section">
+        <h2><i class="fas fa-lock privacy-icon"></i> Data Protection</h2>
+        <p>We implement security measures including:</p>
+        <ul>
+            <li>Encryption of sensitive data</li>
+            <li>Regular security audits</li>
+            <li>Limited access to personal information</li>
+        </ul>
+        <p>Despite these measures, no online service is 100% secure.</p>
+    </div>
+
+    <div class="privacy-section">
+        <h2><i class="fas fa-exchange-alt privacy-icon"></i> Data Sharing</h2>
+        <p>We <strong>do not sell</strong> your personal data. Information may be shared with:</p>
+        <ul>
+            <li>Service providers (hosting, analytics)</li>
+            <li>Legal authorities when required</li>
+            <li>Other users as per your privacy settings</li>
+        </ul>
+    </div>
+
+    <div class="privacy-section">
+        <h2><i class="fas fa-cog privacy-icon"></i> Your Rights</h2>
+        <p>You can:</p>
+        <ul>
+            <li>Access or delete your data</li>
+            <li>Adjust privacy settings</li>
+            <li>Opt out of non-essential cookies</li>
+            <li>Deactivate your account</li>
+        </ul>
+    </div>
+
+    <div class="privacy-update">
+        <p><i class="fas fa-history"></i> Last updated: {% now "F j, Y" %}</p>
+        <p>Questions? <a href="{% url 'contact' %}">Contact us</a></p>
+    </div>
+</div>
+{% endblock %}

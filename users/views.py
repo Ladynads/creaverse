@@ -263,25 +263,46 @@ def message_list(request):
         "messages": messages
     })
 
-@login_required
-def send_message(request, user_id):
-    """Send new message"""
-    receiver = get_object_or_404(User, id=user_id)
 
-    if request.method == "POST":
+@login_required
+@require_http_methods(["GET", "POST"])
+def send_message(request, user_id):
+    recipient = get_object_or_404(User, id=user_id)
+    
+    # Clear any existing messages first
+    message_storage = messages.get_messages(request)
+    for message in message_storage:
+        pass  # Consume all messages
+    
+    if request.method == 'POST':
         form = MessageForm(request.POST)
         if form.is_valid():
-            message = form.save(commit=False)
-            message.sender = request.user
-            message.receiver = receiver
-            message.save()
-            return JsonResponse({'success': True})
+            with transaction.atomic():
+                message = form.save(commit=False)
+                message.sender = request.user
+                message.receiver = recipient
+                message.save()
+                
+                # Create interaction record
+                UserInteraction.objects.create(
+                    from_user=request.user,
+                    to_user=recipient,
+                    interaction_type='message'
+                )
+                
+                # Add ONE consistent success message
+                messages.success(request, "Message sent successfully")
+                return redirect('message_thread', receiver_id=user_id)
+        
+        # Form is invalid
+        messages.error(request, "Please correct the errors below")
     else:
         form = MessageForm()
-
-    return render(request, "users/send_message.html", {
-        "form": form,
-        "receiver": receiver
+    
+    return render(request, 'messaging/send_message.html', {
+        'form': form,
+        'recipient': recipient,
+        'active_tab': 'messages'
     })
 
 @login_required
@@ -324,6 +345,20 @@ def delete_message(request, message_id):
     
     return JsonResponse({'success': False, 'error': "Permission denied"})
 
+@login_required
+def inbox_view(request):
+    """Display the user's message inbox"""
+    messages = Message.objects.filter(
+        receiver=request.user
+    ).order_by('-created_at')
+    unread_count = messages.filter(is_read=False).count()
+    
+    context = {
+        'messages': messages,
+        'unread_count': unread_count
+    }
+    return render(request, 'messages/inbox.html', context)
+
 # ===== Admin Views =====
 @login_required
 @staff_member_required
@@ -355,12 +390,14 @@ def home_view(request):
         "now": timezone.now()
     })
 
-# ===== About View =====
+# ===== Essential Views =====
 def about_view(request):
-    return render(request, 'about.html') 
+    """About page view"""
+    return render(request, 'about.html')
 
-
-
+def privacy_policy(request): 
+    """Privacy policy page"""
+    return render(request, 'privacy.html')
 
 
 

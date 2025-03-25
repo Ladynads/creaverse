@@ -77,7 +77,7 @@
             {% if profile_user != user %}
             <button class="follow-btn {% if is_following %}following{% endif %}" 
                     data-user-id="{{ profile_user.id }}"
-                    data-follow-url="{% url 'follow_user' %}"
+                    data-follow-url="{% url 'follow_toggle' username=profile_user.username %}"
                     data-csrf="{{ csrf_token }}">
                 {% if is_following %}
                 <span class="check">✓</span> Following

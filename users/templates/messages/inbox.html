@@ -13,15 +13,18 @@
     <div class="message-list">
         {% for message in messages %}
             <div class="message-preview {% if not message.is_read %}unread{% endif %}">
-                <a href="{% url 'user_profile' message.sender.username %}" class="avatar-link">
+                <a href="{% url 'profile' message.sender.username %}" class="avatar-link" aria-label="{{ message.sender.username }}'s profile">
                     <img src="{{ message.sender.profile.image.url|default:'/static/images/default-avatar.png' }}" 
-                         class="avatar" alt="{{ message.sender.username }}">
+                         class="message-avatar" 
+                         alt="{{ message.sender.username }}"
+                         loading="lazy"
+                         onerror="this.onerror=null;this.src='/static/images/default-avatar.png'">
                 </a>
                 <div class="message-content">
                     <a href="{% url 'message_thread' message.sender.id %}" class="thread-link">
                         <div class="message-meta">
                             <span class="sender-name">{{ message.sender.username }}</span>
-                            <span class="timestamp">{{ message.timestamp|timesince }} ago</span>
+                            <span class="timestamp">{{ message.created_at|timesince }} ago</span>
                         </div>
                         <p class="message-snippet">
                             {{ message.content|truncatewords:15 }}
@@ -35,7 +38,7 @@
         {% empty %}
             <div class="empty-inbox">
                 <p>No messages yet. 😢</p>
-                <a href="{% url 'send_message' %}" class="btn-start-convo">Start a conversation</a>
+                <a href="{% url 'send_message' user_id=request.user.id %}" class="btn-start-convo">Start a conversation</a>
             </div>
         {% endfor %}
     </div>

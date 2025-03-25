@@ -19,6 +19,7 @@ urlpatterns = [
     path('profile/<str:username>/follow/', views.follow_toggle, name='follow_toggle'),
     
     # Messaging
+    path('inbox/', views.inbox_view, name='inbox'),
     path('messages/', views.message_list, name='message_list'),
     path('messages/send/<int:user_id>/', views.send_message, name='send_message'),
     path('messages/thread/<int:receiver_id>/', views.message_thread, name='message_thread'),
@@ -29,8 +30,10 @@ urlpatterns = [
     path('invite/generate/', views.generate_invite, name='generate_invite'),
     path('invite/send-email/', views.send_invite_email, name='send_invite_email'),
 
-    # other url patterns
+    # Essential Pages
     path('about/', views.about_view, name='about'),
+    path('privacy/', views.privacy_policy, name='privacy'),
+   
 ]
 
 

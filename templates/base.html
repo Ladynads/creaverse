@@ -9,7 +9,7 @@
     <!-- Core CSS -->
     <link rel="stylesheet" href="{% static 'css/styles.css' %}">
     <link rel="stylesheet" href="{% static 'css/profile.css' %}">
-    <link rel="stylesheet" href="{% static 'css/messaging.css' %}"> <!-- New messaging CSS -->
+    <link rel="stylesheet" href="{% static 'css/messaging.css' %}"> 
     
     <!-- Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
@@ -22,7 +22,7 @@
     
     <!-- Preload critical resources -->
     <link rel="preload" href="{% static 'js/script.js' %}" as="script">
-    <link rel="preload" href="{% static 'js/messaging.js' %}" as="script"> <!-- New messaging JS -->
+    <link rel="preload" href="{% static 'js/messaging.js' %}" as="script">
     <link rel="preload" href="{% static 'js/profile.js' %}" as="script">
     
     <!-- Favicon -->
@@ -31,23 +31,23 @@
 <body>
     <!-- Flash Messages (Modern Style) -->
     {% if messages %}
-        <div class="flash-messages">
-            {% for message in messages %}
-                <div class="flash-message flash-{{ message.tags }}">
-                    <div class="flash-content">
-                        <i class="flash-icon 
-                            {% if message.tags == 'success' %}fa-check-circle
-                            {% elif message.tags == 'error' %}fa-times-circle
-                            {% else %}fa-info-circle{% endif %}"></i>
-                        <span>{{ message }}</span>
-                    </div>
-                    <button class="close-flash" aria-label="Close">&times;</button>
+    <div class="flash-messages">
+        {% for message in messages %}
+            <div class="flash-message flash-{{ message.tags }}" data-message-id="{{ forloop.counter }}">
+                <div class="flash-content">
+                    <i class="flash-icon 
+                        {% if message.tags == 'success' %}fa-check-circle
+                        {% elif message.tags == 'error' %}fa-times-circle
+                        {% else %}fa-info-circle{% endif %}"></i>
+                    <span>{{ message }}</span>
                 </div>
-            {% endfor %}
-        </div>
+                <button class="close-flash" aria-label="Close" data-close-id="{{ forloop.counter }}">&times;</button>
+            </div>
+        {% endfor %}
+    </div>
     {% endif %}
 
-    <!-- Navigation Bar with Enhanced Messaging Indicator -->
+    <!-- Navigation Bar -->
     <header class="header">
         <nav class="navbar">
             <a href="{% url 'home' %}" class="logo">
@@ -100,39 +100,70 @@
         
         <!-- Global Message Compose Button (Mobile) -->
         {% if user.is_authenticated %}
-            <a href="{% url 'send_message' %}" class="mobile-compose-btn">
+            <a href="{% url 'message_list' %}" class="mobile-compose-btn">
                 <i class="fas fa-plus"></i>
             </a>
         {% endif %}
     </main>
 
     <!-- Footer with Enhanced Links -->
-    <footer class="footer">
-        <div class="footer-content">
-            <div class="footer-links">
-                <a href="{% url 'about' %}">About</a>
-                <a href="{% url 'privacy' %}">Privacy</a>
-                <a href="{% url 'terms' %}">Terms</a>
-                <a href="{% url 'contact' %}">Contact</a>
-            </div>
-            <p>&copy; 2025 CreatorVerse. All rights reserved.</p>
-            <div class="social-links">
-                <a href="#" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
-                <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
-                <a href="#" aria-label="Discord"><i class="fab fa-discord"></i></a>
-            </div>
+<footer class="footer">
+    <div class="footer-content">
+        <div class="footer-links">
+            <a href="{% url 'about' %}">About</a>
+            <a href="{% url 'privacy' %}">Privacy</a>
         </div>
-    </footer>
+        <p>&copy; 2025 CreatorVerse. All rights reserved.</p>
+        <div class="social-links">
+            <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" aria-label="Twitter">
+                <i class="fab fa-twitter"></i>
+            </a>
+            <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" aria-label="Instagram">
+                <i class="fab fa-instagram"></i>
+            </a>
+            <a href="https://discord.com" target="_blank" rel="noopener noreferrer" aria-label="Discord">
+                <i class="fab fa-discord"></i>
+            </a>
+        </div>
+    </div>
+</footer>
 
     <!-- JavaScript Files -->
     <script src="{% static 'js/script.js' %}" defer></script>
-    <script src="{% static 'js/messaging.js' %}" defer></script> <!-- New messaging JS -->
+    <script src="{% static 'js/messaging.js' %}" defer></script>
     
     {% block extra_js %}
         <!-- Page-specific JS will be loaded here -->
     {% endblock %}
     
-    <!-- Loading Spinner with Animation -->
+    <!-- Flash Messages JS -->
+    {% if messages %}
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const flashMessages = document.querySelectorAll('.flash-message');
+        
+        flashMessages.forEach(msg => {
+            const messageId = msg.dataset.messageId;
+            const closeBtn = msg.querySelector(`[data-close-id="${messageId}"]`);
+            
+            // Auto-dismiss after 5 seconds
+            const timer = setTimeout(() => {
+                msg.style.opacity = '0';
+                setTimeout(() => msg.remove(), 300);
+            }, 5000);
+            
+            // Manual close
+            closeBtn.addEventListener('click', function() {
+                clearTimeout(timer);
+                msg.style.opacity = '0';
+                setTimeout(() => msg.remove(), 300);
+            });
+        });
+    });
+    </script>
+    {% endif %}
+    
+    <!-- Loading Spinner -->
     <div id="loading-spinner" class="loading-spinner" style="display: none;">
         <div class="spinner">
             <div class="double-bounce1"></div>
@@ -141,7 +172,7 @@
         <p class="loading-text">Loading...</p>
     </div>
     
-    <!-- WebSocket Connection Indicator (Hidden by default) -->
+    <!-- WebSocket Connection Indicator -->
     <div id="connection-status" class="connection-status">
         <span class="connection-dot"></span>
         <span class="connection-text">Reconnecting...</span>
