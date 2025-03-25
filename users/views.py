@@ -85,56 +85,84 @@ class CustomLogoutView(LogoutView):
 # ===== Profile Views =====
 @login_required
 def profile_view(request, username):
-    """View user profile with optimized queries and follow functionality"""
+    """View user profile with optimized queries and accurate counting"""
     profile_user = get_object_or_404(
-        User.objects.prefetch_related('following', 'followers'),
+        User.objects.select_related('profile')
+                   .prefetch_related(
+                       Prefetch('followers', queryset=User.objects.only('id')),
+                       Prefetch('following', queryset=User.objects.only('id'))
+                   ),
         username=username
     )
     
+    # Get counts in single queries
+    followers_count = profile_user.followers.count()
+    following_count = profile_user.following.count()
+    
+    # Optimised post queries
     base_posts = Post.objects.filter(user=profile_user).select_related('user')
+    user_posts = base_posts.order_by('-created_at')[:20]
+    
+    # Single query for interactions
+    interactions = UserInteraction.objects.filter(
+        user=profile_user
+    ).select_related('post', 'target_user')[:5]
+    
+    # Efficient engagement score calculation
+    like_count = Like.objects.filter(post__user=profile_user).count()
+    engagement_score = min(100, (
+        (base_posts.count() * 2) + 
+        (like_count * 3) +
+        (followers_count * 5)
+    ) // 2)
     
     context = {
         'profile_user': profile_user,
-        'user_posts': base_posts.order_by('-created_at')[:20],
-        'interactions': UserInteraction.objects.filter(
-            user=profile_user
-        ).select_related('post', 'target_user')[:5],
-        'followers_count': profile_user.followers.count(),
-        'following_count': profile_user.following.count(),
+        'user_posts': user_posts,
+        'interactions': interactions,
+        'followers_count': followers_count,
+        'following_count': following_count,
         'is_following': request.user.following.filter(id=profile_user.id).exists(),
         'is_online': profile_user.last_seen > timezone.now() - timezone.timedelta(minutes=15),
-        'engagement_score': min(100, (
-            (base_posts.count() * 2) + 
-            (Like.objects.filter(post__user=profile_user).count() * 3) +
-            (profile_user.followers.count() * 5)
-        ) // 2),
-        'has_cover_image': hasattr(profile_user, 'profile') and profile_user.profile.cover_image,
+        'engagement_score': engagement_score,
+        'has_cover_image': profile_user.profile.cover_image if hasattr(profile_user, 'profile') else False,
     }
     return render(request, 'users/profile.html', context)
 
 @login_required
 def profile_edit(request):
-    """Edit profile with form handling including cover photo"""
+    """Edit profile with form handling for both user and profile data"""
+    user = request.user
+    profile = user.profile  # Will raise AttributeError if profile doesn't exist
+    
     if request.method == "POST":
-        form = ProfileEditForm(request.POST, request.FILES, instance=request.user)
-        if form.is_valid():
-            user = form.save()
-            
-            # Handle cover photo separately if included in form
-            if 'cover_image' in request.FILES:
-                profile = user.profile
-                profile.cover_image = request.FILES['cover_image']
-                profile.save()
+        user_form = ProfileEditForm(request.POST, request.FILES, instance=user)
+        profile_form = ProfileCoverForm(request.POST, request.FILES, instance=profile)
+        
+        if user_form.is_valid() and profile_form.is_valid():
+            with transaction.atomic():
+                user = user_form.save()
+                profile_form.save()
+                
+                # Handle social links if included in form
+                social_links = user_form.cleaned_data.get('social_links', {})
+                if social_links:
+                    user.social_links = social_links
+                    user.save()
                 
             messages.success(request, "Profile updated successfully!")
             return redirect('profile', username=user.username)
     else:
-        form = ProfileEditForm(instance=request.user)
+        user_form = ProfileEditForm(instance=user, initial={
+            'social_links': getattr(user, 'social_links', {})
+        })
+        profile_form = ProfileCoverForm(instance=profile)
     
     return render(request, 'users/profile_edit.html', {
-        'form': form,
-        'social_links': getattr(request.user, 'social_links', {}),
-        'has_cover_image': hasattr(request.user, 'profile') and request.user.profile.cover_image,
+        'user_form': user_form,
+        'profile_form': profile_form,
+        'has_cover_image': bool(profile.cover_image),
+        'current_cover_url': profile.cover_image.url if profile.cover_image else None,
     })
 
 @require_POST

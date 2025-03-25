@@ -1,10 +1,9 @@
-// profile.js - Updated with all profile functionality
+// ========================
+// PROFILE-SPECIFIC FUNCTIONALITY
+// ========================
 
-// ========================
-// PROFILE TAB SYSTEM
-// ========================
-document.addEventListener("DOMContentLoaded", function() {
-    // Initialize tabs
+// Tab System with HTMX
+function setupProfileTabs() {
     document.querySelectorAll('.tab-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             // Remove active class from all
@@ -15,18 +14,19 @@ document.addEventListener("DOMContentLoaded", function() {
             // Add to clicked tab
             btn.classList.add('active');
             const tabId = btn.dataset.tab;
-            document.getElementById(tabId).classList.add('active');
+            const tabContent = document.getElementById(tabId);
+            tabContent?.classList.add('active');
             
             // Load content via HTMX if empty
-            if(document.getElementById(tabId).children.length === 0) {
+            if(tabContent && tabContent.children.length === 0) {
                 htmx.ajax('GET', `/profile/${tabId}/`, `#${tabId}`);
             }
         });
     });
+}
 
-    // ========================
-    // COVER PHOTO EDITOR
-    // ========================
+// Cover Photo Editor
+function setupCoverPhotoUpload() {
     document.querySelector('.edit-cover-btn')?.addEventListener('click', function() {
         const input = document.createElement('input');
         input.type = 'file';
@@ -34,7 +34,7 @@ document.addEventListener("DOMContentLoaded", function() {
         
         input.onchange = async (e) => {
             const file = e.target.files[0];
-            if (file) {
+            if (file && file.size < 5 * 1024 * 1024) { // 5MB limit
                 const formData = new FormData();
                 formData.append('cover_image', file);
                 formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
@@ -46,19 +46,22 @@ document.addEventListener("DOMContentLoaded", function() {
                     });
                     
                     if (response.ok) {
-                        location.reload(); // Refresh to show new cover
+                        const data = await response.json();
+                        document.querySelector('.cover-photo').style.backgroundImage = `url(${data.new_cover_url})`;
                     }
                 } catch (error) {
-                    console.error('Error:', error);
+                    console.error('Upload error:', error);
                 }
+            } else {
+                alert('Please select an image under 5MB');
             }
         };
         input.click();
     });
+}
 
-    // ========================
-    // FOLLOW BUTTON
-    // ========================
+// Follow Button
+function setupFollowButton() {
     document.querySelector('.follow-btn')?.addEventListener('click', async function() {
         const btn = this;
         btn.disabled = true;
@@ -93,26 +96,24 @@ document.addEventListener("DOMContentLoaded", function() {
             btn.disabled = false;
         }
     });
-});
+}
 
 // ========================
-// LOADING STATES
+// INITIALIZATION
 // ========================
-// Keep your existing loading animations
-document.addEventListener('htmx:beforeRequest', function() {
-    const target = document.getElementById(htmx.config.currentTarget);
-    if (target) {
-        target.classList.add('loading-state');
-        target.innerHTML = `
-            <div class="spinner"></div>
-            <p>Loading...</p>
-        `;
+
+document.addEventListener('DOMContentLoaded', function() {
+    if (document.querySelector('.profile-container')) {
+        setupProfileTabs();
+        setupCoverPhotoUpload();
+        setupFollowButton();
     }
 });
 
-document.addEventListener('htmx:afterRequest', function() {
-    const target = document.getElementById(htmx.config.currentTarget);
-    if (target) {
-        target.classList.remove('loading-state');
+// HTMX Event Handlers
+document.body.addEventListener('htmx:afterSwap', function() {
+    if (document.querySelector('.profile-container')) {
+        setupProfileTabs();
+        setupFollowButton();
     }
 });
