@@ -628,22 +628,27 @@ body {
     width: 100%;
 }
 
-.profile-avatar {
+.profile-picture {
+    position: relative;
     width: 120px;
     height: 120px;
-    border-radius: 50%;
+    margin: -60px auto 0; /* Centers and overlaps cover */
     border: 5px solid #FFFFFF;
-    object-fit: cover;
+    border-radius: 50%;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+.profile-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
     transition: all 0.3s ease;
 }
 
-.profile-avatar:hover {
-    transform: scale(1.05) rotate(5deg);
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+.profile-img:hover {
+    transform: scale(1.05);
 }
-
-
 .profile-info {
     padding: 80px 20px 20px;
     text-align: center;
