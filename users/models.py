@@ -25,7 +25,11 @@ def upload_to_profile_pics(instance, filename):
     return f'profile_pics/{instance.username}/{filename}'
 
 class CustomUser(AbstractUser):
-    """Extended user model with social features."""
+    """Extended user model with authentication and basic profile fields."""
+    # Core Authentication Fields (inherited from AbstractUser)
+    # username, email, password, etc. are already included
+    
+    # Profile Display Fields
     bio = models.TextField(
         blank=True,
         null=True,
@@ -37,18 +41,25 @@ class CustomUser(AbstractUser):
         upload_to=upload_to_profile_pics,
         blank=True,
         null=True,
-        help_text=_("Upload a profile picture"),
+        help_text=_("Upload a profile picture (1:1 aspect ratio recommended)"),
         validators=[FileExtensionValidator(['jpg', 'jpeg', 'png', 'webp'])]
     )
-    used_invite = models.BooleanField(
-        default=False,
-        help_text=_("Has this user used an invite code?")
+    
+    # Social Features
+    following = models.ManyToManyField(
+        'self',
+        symmetrical=False,
+        related_name='followers',
+        blank=True,
+        help_text=_("Users this user is following")
     )
     social_links = JSONField(
         default=dict,
         blank=True,
-        help_text=_("Social media links in JSON format")
+        help_text=_("Social media links in JSON format (e.g., {'twitter': 'https://...'})")
     )
+    
+    # Account Status Fields
     is_verified = models.BooleanField(
         default=False,
         help_text=_("Designates whether the user is verified")
@@ -57,27 +68,42 @@ class CustomUser(AbstractUser):
         auto_now=True,
         help_text=_("Last time the user was active")
     )
-    following = models.ManyToManyField(
-        'self',
-        symmetrical=False,
-        related_name='followers',
-        blank=True,
-        help_text=_("Users this user is following")
+    used_invite = models.BooleanField(
+        default=False,
+        help_text=_("Has this user used an invite code?")
     )
 
+    # Properties
     @property
     def is_online(self):
-        """Check if user is currently online."""
+        """Check if user is currently online (active within last 15 minutes)."""
         return self.last_seen > now() - timedelta(minutes=15)
 
+    @property
+    def full_profile(self):
+        """Returns the complete profile including both User and Profile model data."""
+        return {
+            'username': self.username,
+            'bio': self.bio,
+            'profile_image': self.get_profile_image(),
+            'cover_image': self.profile.get_cover_image_url() if hasattr(self, 'profile') else None,
+            'social_links': self.social_links,
+            'is_verified': self.is_verified
+        }
+
+    # Methods
     def get_profile_image(self):
-        """Returns the profile image URL or default if none exists."""
+        """Returns the profile image URL or default if none exists.
+        Usage: {{ user.get_profile_image }}
+        """
         if self.profile_image and hasattr(self.profile_image, "url"):
             return self.profile_image.url
         return static("profile_pics/default_profile.webp")
 
     def get_social_link(self, platform):
-        """Get specific social link if exists."""
+        """Get specific social link if exists.
+        Usage: {{ user.get_social_link('twitter') }}
+        """
         return self.social_links.get(platform, '')
 
     def clean(self):
@@ -94,10 +120,16 @@ class CustomUser(AbstractUser):
             models.Index(fields=['email']),
             models.Index(fields=['last_seen']),
         ]
+        ordering = ['-date_joined']
 
     def __str__(self):
         return self.username
 
+    def save(self, *args, **kwargs):
+        """Ensure clean data before saving."""
+        self.clean()
+        super().save(*args, **kwargs)
+        
 class InviteCode(models.Model):
     """System for invite-only registrations."""
     code = models.CharField(
@@ -252,3 +284,42 @@ class UserInteraction(models.Model):
                 _("Interaction can't reference both post and user")
             )
 
+class Profile(models.Model):
+    """Extended profile information for users."""
+    user = models.OneToOneField(
+        CustomUser,
+        on_delete=models.CASCADE,
+        related_name='profile'
+    )
+    cover_image = models.ImageField(
+        upload_to='cover_images/',
+        blank=True,
+        null=True,
+        help_text=_("Upload a cover image (recommended size: 1500x500px)"),
+        validators=[FileExtensionValidator(['jpg', 'jpeg', 'png', 'webp'])]
+    )
+    location = models.CharField(
+        max_length=100,
+        blank=True,
+        null=True,
+        help_text=_("User's location")
+    )
+    website = models.URLField(
+        blank=True,
+        null=True,
+        help_text=_("Personal website URL")
+    )
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = _("User Profile")
+        verbose_name_plural = _("User Profiles")
+
+    def __str__(self):
+        return f"Profile for {self.user.username}"
+
+    def get_cover_image_url(self):
+        """Returns the cover image URL or default gradient if none exists."""
+        if self.cover_image and hasattr(self.cover_image, "url"):
+            return self.cover_image.url
+        return None  # Will use CSS gradient as fallback

@@ -48,28 +48,6 @@ def user_stats_view(request, username):
         'following_count': user.following.count()
     })
 
-@login_required
-def profile_tab_content(request, username, tab_name):
-    """HTMX endpoint for tabbed content"""
-    profile_user = get_object_or_404(User, username=username)
-    
-    if tab_name == 'likes':
-        posts = Post.objects.filter(likes__user=profile_user).distinct()
-        template = 'users/partials/likes_tab.html'
-    elif tab_name == 'saved' and profile_user == request.user:
-        posts = Post.objects.filter(saved_by=profile_user)
-        template = 'users/partials/saved_tab.html'
-    elif tab_name == 'drafts' and profile_user == request.user:
-        posts = Post.objects.filter(user=profile_user, is_draft=True)
-        template = 'users/partials/drafts_tab.html'
-    else:
-        posts = Post.objects.filter(user=profile_user)
-        template = 'users/partials/posts_tab.html'
-
-    return render(request, template, {
-        'profile_user': profile_user,
-        'posts': posts.order_by('-created_at')
-    })
 
 # ===== Authentication Views =====
 def register(request):
@@ -103,6 +81,7 @@ class CustomLogoutView(LogoutView):
         messages.info(request, "You have been logged out.")
         return redirect(self.next_page)
 
+
 # ===== Profile Views =====
 @login_required
 def profile_view(request, username):
@@ -129,16 +108,24 @@ def profile_view(request, username):
             (Like.objects.filter(post__user=profile_user).count() * 3) +
             (profile_user.followers.count() * 5)
         ) // 2),
+        'has_cover_image': hasattr(profile_user, 'profile') and profile_user.profile.cover_image,
     }
     return render(request, 'users/profile.html', context)
 
 @login_required
 def profile_edit(request):
-    """Edit profile with form handling"""
+    """Edit profile with form handling including cover photo"""
     if request.method == "POST":
         form = ProfileEditForm(request.POST, request.FILES, instance=request.user)
         if form.is_valid():
             user = form.save()
+            
+            # Handle cover photo separately if included in form
+            if 'cover_image' in request.FILES:
+                profile = user.profile
+                profile.cover_image = request.FILES['cover_image']
+                profile.save()
+                
             messages.success(request, "Profile updated successfully!")
             return redirect('profile', username=user.username)
     else:
@@ -146,7 +133,88 @@ def profile_edit(request):
     
     return render(request, 'users/profile_edit.html', {
         'form': form,
-        'social_links': getattr(request.user, 'social_links', {})
+        'social_links': getattr(request.user, 'social_links', {}),
+        'has_cover_image': hasattr(request.user, 'profile') and request.user.profile.cover_image,
+    })
+
+@require_POST
+@login_required
+def update_cover(request):
+    """Handle AJAX cover photo uploads with validation"""
+    if not request.FILES.get('cover_image'):
+        return JsonResponse({'success': False, 'error': 'No image provided'}, status=400)
+    
+    try:
+        # Validate file size (max 5MB)
+        if request.FILES['cover_image'].size > 5 * 1024 * 1024:
+            return JsonResponse({
+                'success': False,
+                'error': 'Image size must be less than 5MB'
+            }, status=400)
+            
+        # Validate file type
+        valid_types = ['image/jpeg', 'image/png', 'image/webp']
+        if request.FILES['cover_image'].content_type not in valid_types:
+            return JsonResponse({
+                'success': False,
+                'error': 'Only JPEG, PNG, or WebP images are allowed'
+            }, status=400)
+        
+        # Ensure profile exists
+        profile, created = Profile.objects.get_or_create(user=request.user)
+        
+        # Save the cover image
+        profile.cover_image = request.FILES['cover_image']
+        profile.save()
+        
+        return JsonResponse({
+            'success': True,
+            'new_cover_url': profile.cover_image.url,
+            'message': 'Cover photo updated successfully!'
+        })
+        
+    except Exception as e:
+        logger.error(f"Cover upload error: {str(e)}")
+        return JsonResponse({
+            'success': False,
+            'error': 'Server error during upload'
+        }, status=500)
+
+# ===== Profile Tab Views =====
+@login_required
+def profile_tab_content(request, username, tab_name):
+    """HTMX endpoint for tabbed content with optimized queries"""
+    profile_user = get_object_or_404(
+        User.objects.prefetch_related('following', 'followers'),
+        username=username
+    )
+    
+    # Base queryset with common select_related
+    posts = Post.objects.select_related('user').filter(user=profile_user)
+    
+    if tab_name == 'likes':
+        posts = Post.objects.filter(
+            likes__user=profile_user
+        ).distinct().select_related('user')
+        template = 'users/partials/likes_tab.html'
+    elif tab_name == 'saved' and profile_user == request.user:
+        posts = Post.objects.filter(
+            saved_by=profile_user
+        ).select_related('user')
+        template = 'users/partials/saved_tab.html'
+    elif tab_name == 'drafts' and profile_user == request.user:
+        posts = Post.objects.filter(
+            user=profile_user,
+            is_draft=True
+        ).select_related('user')
+        template = 'users/partials/drafts_tab.html'
+    else:  # Default posts tab
+        template = 'users/partials/posts_tab.html'
+    
+    return render(request, template, {
+        'profile_user': profile_user,
+        'posts': posts.order_by('-created_at')[:20],  # Consistent pagination
+        'is_owner': profile_user == request.user,
     })
 
 # ===== Social Interaction Views =====

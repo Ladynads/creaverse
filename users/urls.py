@@ -10,6 +10,7 @@ urlpatterns = [
     # Profiles
     path('profile/<str:username>/', views.profile_view, name='profile'),
     path('profile/edit/', views.profile_edit, name='profile_edit'),
+    path('profile/update_cover/', views.update_cover, name='update_cover'),  
     
     # HTMX Profile Endpoints
     path('profile/<str:username>/stats/', views.user_stats_view, name='user_stats'),
@@ -33,7 +34,6 @@ urlpatterns = [
     # Essential Pages
     path('about/', views.about_view, name='about'),
     path('privacy/', views.privacy_policy, name='privacy'),
-   
 ]
 
 

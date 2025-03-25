@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from .models import CustomUser, InviteCode, Message, UserInteraction
+from .models import CustomUser, InviteCode, Message, UserInteraction, Profile
 
 # Custom User Admin
 class CustomUserAdmin(UserAdmin):
@@ -62,3 +62,9 @@ if not admin.site.is_registered(CustomUser):
 admin.site.register(InviteCode, InviteCodeAdmin)
 admin.site.register(Message, MessageAdmin)
 admin.site.register(UserInteraction, UserInteractionAdmin)
+
+# Profile Admin
+@admin.register(Profile)
+class ProfileAdmin(admin.ModelAdmin):
+    list_display = ('user',)
+    search_fields = ('user__username',)
